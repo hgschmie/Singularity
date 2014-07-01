@@ -45,8 +45,6 @@ class RequestsView extends View
     initialize: ({@requestsFilter, @requestsSubFilter, @searchFilter}) ->
         @bodyTemplate = @bodyTemplateMap[@requestsFilter]
 
-        $(window).on "scroll", @handleScroll
-
         # Set up collection
         collectionMap =
             all:      app.collections.requestsAll
@@ -79,7 +77,7 @@ class RequestsView extends View
         if @searchFilter
             requests = _.filter requests, (request) =>
                 request.name.toLowerCase().indexOf(@searchFilter.toLowerCase()) isnt -1
-        
+
         # Only show requests that match the clicky filters
         if @requestsFilter in @haveSubfilter and @requestsSubFilter isnt 'all'
             requests = _.filter requests, (request) =>
@@ -100,7 +98,7 @@ class RequestsView extends View
                 requests = requests.reverse()
         else
             requests.reverse()
-            
+
         @currentRequests = requests
 
     render: =>
@@ -117,7 +115,7 @@ class RequestsView extends View
             collectionSynced: @collectionSynced
             haveRequests: @collection.length and @collectionSynced
 
-        partials = 
+        partials =
             partials:
                 requestsBody: @bodyTemplate
 
@@ -134,9 +132,15 @@ class RequestsView extends View
     renderTable: =>
         $(window).scrollTop 0
         @filterCollection()
-        @renderProgress = 0
 
+        @resetTableRendering()
         @renderTableChunk()
+
+    # Cancel any in progress async renders and reset state
+    resetTableRendering: ->
+        clearTimeout @nextAsyncRender
+        @fixedColumns = false
+        @renderProgress = 0
 
     renderTableChunk: =>
         if @ isnt app.views.current
@@ -144,17 +148,22 @@ class RequestsView extends View
 
         firstStage = @renderProgress is 0
 
+
         newProgress = @renderAtOnce + @renderProgress
         requests = @currentRequests.slice(@renderProgress, newProgress)
+        console.log "rendering #{@renderProgress} to #{newProgress} (out of #{@currentRequests.length}, firstStage = #{firstStage})"
         @renderProgress = newProgress
+        anyMoreToRender = newProgress < @currentRequests.length
 
         $contents = @bodyTemplate
             requests: requests
             rowsOnly: true
-        
+
         $table = @$ "tbody"
         $headings = @$ "thead th"
         if firstStage and $headings.length > 0 and not @fixedColumns
+            console.log 'fixing table', $table.get(0)
+
             # After the first stage of rendering we want to fix
             # the width of the columns to prevent having to recalculate
             # it constantly
@@ -181,6 +190,9 @@ class RequestsView extends View
         else
             $table.append $contents
 
+        if anyMoreToRender
+            @nextAsyncRender = setTimeout @renderTableChunk, 50
+
     sortTable: (event) =>
         $target = $ event.currentTarget
         newSortAttribute = $target.attr "data-sort-attribute"
@@ -201,16 +213,6 @@ class RequestsView extends View
         $target.attr "data-sorted-direction", if @sortAscending then "ascending" else "descending"
 
         @renderTable()
-
-    handleScroll: (event) =>
-        return if @renderProgress >= @collection.length
-
-        $table = @$ "tbody"
-        tableBottom = $table.height() + $table.offset().top
-        $window = $(window)
-        scrollBottom = $window.scrollTop() + $window.height()
-        if scrollBottom >= tableBottom
-            @renderTableChunk()
 
     updateUrl: =>
         app.router.navigate "/requests/#{ @requestsFilter }/#{ @requestsSubFilter }/#{ @searchFilter }", { replace: true }
@@ -254,13 +256,13 @@ class RequestsView extends View
             message: "<p>Are you sure you want to unpause the request?</p><pre>#{ requestModel.get('id') }</pre>"
             callback: (confirmed) =>
                 return unless confirmed
-                
+
                 if @requestsFilter is "paused"
                     $row.remove()
-                    
+
                 requestModel.unpause().done =>
                     @refresh()
-                        
+
     toggleStar: (e) ->
         $target = $(e.target)
         $table = $target.parents 'table'
