@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import javax.inject.Singleton;
 
-import org.apache.mesos.MesosSchedulerDriver;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Protos.FrameworkID;
 import org.apache.mesos.Protos.MasterInfo;
@@ -16,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
+import com.groupon.mesos.JesosSchedulerDriver;
 import com.hubspot.singularity.SingularityTaskId;
 import com.hubspot.singularity.config.MesosConfiguration;
 
@@ -26,7 +26,7 @@ public class SingularityDriver {
 
   private final Protos.FrameworkInfo frameworkInfo;
   private final SingularityMesosSchedulerDelegator scheduler;
-  private final MesosSchedulerDriver driver;
+  private final JesosSchedulerDriver driver;
 
   @Inject
   SingularityDriver(final SingularityMesosSchedulerDelegator scheduler, final MesosConfiguration configuration) throws IOException {
@@ -39,7 +39,7 @@ public class SingularityDriver {
         .build();
 
     this.scheduler = scheduler;
-    this.driver = new MesosSchedulerDriver(scheduler, frameworkInfo, configuration.getMaster());
+    this.driver = new JesosSchedulerDriver(scheduler, frameworkInfo, configuration.getMaster());
   }
 
   @VisibleForTesting

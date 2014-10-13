@@ -39,6 +39,10 @@
 
     <dep.plugin.surefire.version>2.18</dep.plugin.surefire.version>
 
+    <!-- jesos wants 18.0 -->
+    <dep.guava.version>18.0</dep.guava.version>
+    <jesos.version>1.0</jesos.version>
+
     <!-- hubspot jackson and dropwizard dep use 2.3.x -->
     <dep.jackson.version>2.3.2</dep.jackson.version>
     <dep.jackson.core.version>${dep.jackson.version}</dep.jackson.core.version>
@@ -256,6 +260,12 @@
       </dependency>
 
       <dependency>
+        <groupId>org.jboss.logging</groupId>
+        <artifactId>jboss-logging</artifactId>
+        <version>3.1.4.GA</version>
+      </dependency>
+
+      <dependency>
         <groupId>com.codahale.metrics</groupId>
         <artifactId>metrics-core</artifactId>
         <version>${dep.metrics.version}</version>
@@ -309,6 +319,12 @@
         <groupId>org.apache.mesos</groupId>
         <artifactId>mesos</artifactId>
         <version>${mesos.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.groupon.mesos</groupId>
+        <artifactId>jesos</artifactId>
+        <version>${jesos.version}</version>
       </dependency>
 
       <dependency>
