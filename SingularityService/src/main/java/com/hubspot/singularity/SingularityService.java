@@ -41,7 +41,7 @@ public class SingularityService<T extends SingularityConfiguration> extends Appl
 
     bootstrap.addBundle(new CorsBundle());
     bootstrap.addBundle(new ViewBundle());
-    bootstrap.addBundle(new AssetsBundle("/static/static/", "/static/"));
+    bootstrap.addBundle(new AssetsBundle("/assets/static/", "/static/"));
     bootstrap.addBundle(new AssetsBundle("/static/api-docs/", "/api-docs/", "index.html", "api-docs"));
     bootstrap.addBundle(new MigrationsBundle<SingularityConfiguration>() {
       @Override

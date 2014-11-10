@@ -6,7 +6,7 @@ handlebars = require 'handlebars-brunch/node_modules/handlebars'
 # Brunch settings
 exports.config =
     paths:
-        public: path.resolve(__dirname, '../SingularityService/target/generated-resources/static')
+        public: path.resolve(__dirname, '../SingularityService/target/generated-resources/assets')
 
     files:
         javascripts:
@@ -37,7 +37,7 @@ exports.config =
         indexTemplate = fs.readFileSync templatePath, 'utf-8'
 
         templateData =
-            staticRoot: "#{ @config.server.base }/static"
+            staticRoot: "#{ @config.server.base }/assets"
             appRoot: @config.server.base
             apiRoot: ''
             slaveHttpPort: 5051
