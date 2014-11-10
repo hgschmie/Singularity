@@ -1,5 +1,7 @@
 package com.hubspot.singularity.views;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import io.dropwizard.server.SimpleServerFactory;
 import io.dropwizard.views.View;
 
@@ -24,12 +26,19 @@ public class IndexView extends View {
   private final Integer slaveHttpPort;
   private final Integer slaveHttpsPort;
 
-  public IndexView(SingularityConfiguration configuration) {
+  public IndexView(String uiPrefix, SingularityConfiguration configuration) {
     super("index.mustache");
 
-    appRoot = configuration.getUiConfiguration().getBaseUrl().or(((SimpleServerFactory) configuration.getServerFactory()).getApplicationContextPath());
-    staticRoot = String.format("%s/static", appRoot);
-    apiRoot = String.format("%s%s", appRoot, SingularityService.API_BASE_PATH);
+    checkNotNull(uiPrefix, "uiPrefix is null");
+
+    String singularityPrefix = configuration.getUiConfiguration().getBaseUrl().or(((SimpleServerFactory) configuration.getServerFactory()).getApplicationContextPath());
+    if (singularityPrefix.endsWith("/")) {
+      singularityPrefix = singularityPrefix.substring(0, singularityPrefix.length() - 1);
+    }
+
+    appRoot = String.format("%s%s", singularityPrefix, uiPrefix);
+    staticRoot = String.format("%s/static", singularityPrefix);
+    apiRoot = String.format("%s%s", singularityPrefix, SingularityService.API_BASE_PATH);
 
     title = configuration.getUiConfiguration().getTitle();
 
