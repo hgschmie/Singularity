@@ -143,8 +143,6 @@ public class SingularityMainModule implements Module {
     public HostAndPort get() {
       return HostAndPort.fromParts(hostname, httpPort);
     }
-
-
   }
 
   @Provides
