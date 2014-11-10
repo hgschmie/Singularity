@@ -99,7 +99,8 @@ public class GuiceBundle<T extends Configuration> implements ConfiguredBundle<T>
             .addAll(configurationAwareModules)
             .add(new GuiceEnforcerModule())
             .add(new JerseyServletModule())
-            .add(dropwizardModule).add(new Module() {
+            .add(dropwizardModule)
+            .add(new Module() {
               @Override
               public void configure(final Binder binder) {
                 binder.bind(Environment.class).toInstance(environment);
