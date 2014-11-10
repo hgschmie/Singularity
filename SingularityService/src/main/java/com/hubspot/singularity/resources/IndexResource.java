@@ -1,26 +1,34 @@
 package com.hubspot.singularity.resources;
 
+import java.net.URI;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriInfo;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.Inject;
-import com.hubspot.singularity.config.SingularityConfiguration;
-import com.hubspot.singularity.views.IndexView;
 
-@Path("/{wildcard:.*}")
+@Path("/")
 @Produces(MediaType.TEXT_HTML)
 public class IndexResource {
-  private final SingularityConfiguration configuration;
+  private static final Logger LOG = LoggerFactory.getLogger(IndexResource.class);
 
   @Inject
-  public IndexResource(SingularityConfiguration configuration) {
-    this.configuration = configuration;
+  public IndexResource() {
   }
 
   @GET
-  public IndexView getIndex() {
-    return new IndexView(configuration);
+  @Path("/")
+  public Response getIndex(@Context UriInfo info) {
+    LOG.info("Requesting " + info.getPath());
+    return Response.status(Status.MOVED_PERMANENTLY).location(URI.create(UiResource.UI_PREFIX)).build();
   }
 }
