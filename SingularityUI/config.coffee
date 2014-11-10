@@ -38,7 +38,7 @@ exports.config =
 
         templateData =
             staticRoot: "#{ @config.server.base }/assets"
-            appRoot: @config.server.base
+            appRoot: "# { @config.server.base }/ui"
             apiRoot: ''
             slaveHttpPort: 5051
             title: 'Singularity (local dev)'
