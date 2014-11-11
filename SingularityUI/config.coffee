@@ -37,8 +37,8 @@ exports.config =
         indexTemplate = fs.readFileSync templatePath, 'utf-8'
 
         templateData =
-            staticRoot: "#{ @config.server.base }/assets"
-            appRoot: "# { @config.server.base }/ui"
+            staticRoot: "#{ @config.server.base }/static"
+            appRoot: "#{ @config.server.base }/ui"
             apiRoot: ''
             slaveHttpPort: 5051
             title: 'Singularity (local dev)'
