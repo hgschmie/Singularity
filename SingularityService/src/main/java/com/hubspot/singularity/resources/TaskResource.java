@@ -11,6 +11,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -59,6 +61,8 @@ public class TaskResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @PropertyFiltering
   @Path("/scheduled")
   @ApiOperation("Retrieve list of scheduled tasks.")
@@ -69,6 +73,8 @@ public class TaskResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @PropertyFiltering
   @Path("/scheduled/ids")
   @ApiOperation("Retrieve list of scheduled task IDs.")
@@ -93,6 +99,8 @@ public class TaskResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @PropertyFiltering
   @Path("/scheduled/task/{pendingTaskId}")
   @ApiOperation("Retrieve information about a pending task.")
@@ -109,6 +117,8 @@ public class TaskResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @PropertyFiltering
   @Path("/scheduled/request/{requestId}")
   @ApiOperation("Retrieve list of scheduled tasks for a specific request.")
@@ -119,6 +129,8 @@ public class TaskResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @Path("/active/slave/{slaveId}")
   @ApiOperation("Retrieve list of active tasks on a specific slave.")
   public List<SingularityTask> getTasksForSlave(@PathParam("slaveId") String slaveId) {
@@ -140,6 +152,8 @@ public class TaskResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @PropertyFiltering
   @Path("/active")
   @ApiOperation("Retrieve the list of active tasks.")
@@ -148,6 +162,8 @@ public class TaskResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @PropertyFiltering
   @Path("/cleaning")
   @ApiOperation("Retrieve the list of cleaning tasks.")
@@ -156,6 +172,8 @@ public class TaskResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @PropertyFiltering
   @Path("/lbcleanup")
   @ApiOperation("Retrieve the list of tasks being cleaned from load balancers.")
@@ -176,6 +194,8 @@ public class TaskResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @Path("/task/{taskId}")
   @ApiOperation("Retrieve information about a specific active task.")
   public SingularityTask getActiveTask(@PathParam("taskId") String taskId) {
@@ -183,6 +203,8 @@ public class TaskResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @Path("/task/{taskId}/statistics")
   @ApiOperation("Retrieve statistics about a specific active task.")
   public MesosTaskStatisticsObject getTaskStatistics(@PathParam("taskId") String taskId) {
@@ -206,6 +228,8 @@ public class TaskResource {
   }
 
   @DELETE
+  @Timed
+  @ExceptionMetered
   @Path("/task/{taskId}")
   @ApiOperation("Kill a specific active task.")
   public SingularityTaskCleanupResult killTask(@PathParam("taskId") String taskId, @QueryParam("user") Optional<String> user) {
@@ -217,5 +241,4 @@ public class TaskResource {
 
     return new SingularityTaskCleanupResult(result, task);
   }
-
 }

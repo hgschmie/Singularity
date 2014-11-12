@@ -14,6 +14,8 @@ import javax.ws.rs.core.UriInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 
 @Path("/")
@@ -26,6 +28,8 @@ public class IndexResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @Path("/")
   public Response getIndex(@Context UriInfo info) {
     LOG.info("Requesting " + info.getPath());
