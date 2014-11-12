@@ -11,6 +11,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.singularity.MachineState;
@@ -43,6 +45,8 @@ public class SlaveResource extends AbstractMachineResource<SingularitySlave> {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @Path("/")
   @ApiOperation("Retrieve the list of all known slaves, optionally filtering by a particular state")
   public List<SingularitySlave> getSlaves(@ApiParam("Optionally specify a particular state to filter slaves by") @QueryParam("state") Optional<MachineState> filterState) {
@@ -50,6 +54,8 @@ public class SlaveResource extends AbstractMachineResource<SingularitySlave> {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @Path("/slave/{slaveId}")
   @ApiOperation("Retrieve the history of a given slave")
   public List<SingularityMachineStateHistoryUpdate> getSlaveHistory(@ApiParam("Slave ID") @PathParam("slaveId") String slaveId) {
@@ -57,6 +63,8 @@ public class SlaveResource extends AbstractMachineResource<SingularitySlave> {
   }
 
   @DELETE
+  @Timed
+  @ExceptionMetered
   @Path("/slave/{slaveId}")
   @ApiOperation("Remove a known slave, erasing history. This operation will cancel decomissioning of the slave")
   public void removeSlave(@ApiParam("Active SlaveId") @PathParam("slaveId") String slaveId) {
@@ -64,6 +72,8 @@ public class SlaveResource extends AbstractMachineResource<SingularitySlave> {
   }
 
   @POST
+  @Timed
+  @ExceptionMetered
   @Path("/slave/{slaveId}/decomission")
   @Deprecated
   public void decomissionSlave(@ApiParam("Active slaveId") @PathParam("slaveId") String slaveId,
@@ -72,6 +82,8 @@ public class SlaveResource extends AbstractMachineResource<SingularitySlave> {
   }
 
   @POST
+  @Timed
+  @ExceptionMetered
   @Path("/slave/{slaveId}/decommission")
   @ApiOperation("Begin decommissioning a specific active slave")
   public void decommissionSlave(@ApiParam("Active slaveId") @PathParam("slaveId") String slaveId,
@@ -80,6 +92,8 @@ public class SlaveResource extends AbstractMachineResource<SingularitySlave> {
   }
 
   @POST
+  @Timed
+  @ExceptionMetered
   @Path("/slave/{slaveId}/activate")
   @ApiOperation("Activate a decomissioning slave, canceling decomission without erasing history")
   public void activateSlave(@ApiParam("Active slaveId") @PathParam("slaveId") String slaveId,

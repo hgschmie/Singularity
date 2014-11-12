@@ -25,6 +25,8 @@ import org.jets3t.service.model.S3Object;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
@@ -221,6 +223,8 @@ public class S3LogResource extends AbstractHistoryResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @Path("/task/{taskId}")
   @ApiOperation("Retrieve the list of logs stored in S3 for a specific task.")
   public List<SingularityS3Log> getS3LogsForTask(@ApiParam("The task ID to search for") @PathParam("taskId") String taskId) throws Exception {
@@ -238,6 +242,8 @@ public class S3LogResource extends AbstractHistoryResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @Path("/request/{requestId}")
   @ApiOperation("Retrieve the list of logs stored in S3 for a specific request.")
   public List<SingularityS3Log> getS3LogsForRequest(@ApiParam("The request ID to search for") @PathParam("requestId") String requestId) throws Exception {
@@ -253,6 +259,8 @@ public class S3LogResource extends AbstractHistoryResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @Path("/request/{requestId}/deploy/{deployId}")
   @ApiOperation("Retrieve the list of logs stored in S3 for a specific deploy.")
   public List<SingularityS3Log> getS3LogsForDeploy(@ApiParam("The request ID to search for") @PathParam("requestId") String requestId,
