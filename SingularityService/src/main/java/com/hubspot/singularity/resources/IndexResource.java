@@ -13,6 +13,8 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
@@ -27,6 +29,8 @@ public class IndexResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @Path("/")
   public Response getIndex(@Context UriInfo info) {
     return Response.status(Status.MOVED_PERMANENTLY).location(UriBuilder.fromPath(singularityUriBase).path(UI_RESOURCE_LOCATION).build()).build();

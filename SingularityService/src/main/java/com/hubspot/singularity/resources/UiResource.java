@@ -8,6 +8,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.singularity.config.SingularityConfiguration;
@@ -32,6 +34,8 @@ public class UiResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @Produces(MediaType.TEXT_HTML)
   public IndexView getIndex() {
     return new IndexView(singularityUriBase, UI_RESOURCE_LOCATION, configuration);

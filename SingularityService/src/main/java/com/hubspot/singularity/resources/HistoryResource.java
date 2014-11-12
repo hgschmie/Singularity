@@ -11,6 +11,8 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import com.hubspot.singularity.SingularityDeployHistory;
 import com.hubspot.singularity.SingularityRequestHistory;
@@ -53,6 +55,8 @@ public class HistoryResource extends AbstractHistoryResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @Path("/task/{taskId}")
   @ApiOperation("Retrieve the history for a specific task.")
   public SingularityTaskHistory getHistoryForTask(@ApiParam("Task ID to look up") @PathParam("taskId") String taskId) {
@@ -90,6 +94,8 @@ public class HistoryResource extends AbstractHistoryResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @Path("/request/{requestId}/tasks/active")
   @ApiOperation("Retrieve the history for all active tasks of a specific request.")
   public List<SingularityTaskIdHistory> getTaskHistoryForRequest(@ApiParam("Request ID to look up") @PathParam("requestId") String requestId) {
@@ -99,6 +105,8 @@ public class HistoryResource extends AbstractHistoryResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @Path("/request/{requestId}/deploy/{deployId}")
   @ApiOperation("Retrieve the history for a specific deploy.")
   public SingularityDeployHistory getDeploy(@ApiParam("Request ID for deploy") @PathParam("requestId") String requestId,
@@ -107,6 +115,8 @@ public class HistoryResource extends AbstractHistoryResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @Path("/request/{requestId}/tasks")
   @ApiOperation("Retrieve the history for all tasks of a specific request.")
   public List<SingularityTaskIdHistory> getTaskHistoryForRequest(@ApiParam("Request ID to look up") @PathParam("requestId") String requestId,
@@ -119,6 +129,8 @@ public class HistoryResource extends AbstractHistoryResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @Path("/request/{requestId}/deploys")
   @ApiOperation("")
   public List<SingularityDeployHistory> getDeploys(@ApiParam("Request ID to look up") @PathParam("requestId") String requestId,
@@ -131,6 +143,8 @@ public class HistoryResource extends AbstractHistoryResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @Path("/request/{requestId}/requests")
   @ApiOperation("")
   public List<SingularityRequestHistory> getRequestHistoryForRequest(@ApiParam("Request ID to look up") @PathParam("requestId") String requestId,
@@ -143,6 +157,8 @@ public class HistoryResource extends AbstractHistoryResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @Path("/requests/search")
   @ApiOperation("Search for requests.")
   public List<String> getRequestHistoryForRequestLike(@ApiParam("Request ID prefix to search for") @QueryParam("requestIdLike") String requestIdLike,
@@ -153,5 +169,4 @@ public class HistoryResource extends AbstractHistoryResource {
 
     return historyManager.getRequestHistoryLike(requestIdLike, limitStart, limitCount);
   }
-
 }
