@@ -16,6 +16,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
 import com.google.inject.Inject;
 import com.hubspot.jackson.jaxrs.PropertyFiltering;
@@ -63,6 +65,8 @@ public class DeployResource extends AbstractRequestResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @PropertyFiltering
   @Path("/pending")
   @ApiOperation(response=SingularityPendingDeploy.class, responseContainer="List", value="Retrieve the list of current pending deploys")
@@ -71,6 +75,8 @@ public class DeployResource extends AbstractRequestResource {
   }
 
   @POST
+  @Timed
+  @ExceptionMetered
   @Consumes({ MediaType.APPLICATION_JSON })
   @ApiOperation(value="Start a new deployment for a Request", response=SingularityRequestParent.class)
   @ApiResponses({
@@ -117,6 +123,8 @@ public class DeployResource extends AbstractRequestResource {
   }
 
   @DELETE
+  @Timed
+  @ExceptionMetered
   @Path("/deploy/{deployId}/request/{requestId}")
   @ApiOperation(value="Cancel a pending deployment (best effort - the deploy may still succeed or fail)", response=SingularityRequestParent.class)
   @ApiResponses({
