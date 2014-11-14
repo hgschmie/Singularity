@@ -10,6 +10,7 @@ import com.hubspot.singularity.config.SingularityConfiguration;
 
 public class IndexView extends View {
 
+  private final String serverRoot;
   private final String appRoot;
   private final String staticRoot;
   private final String apiRoot;
@@ -31,25 +32,27 @@ public class IndexView extends View {
 
     checkNotNull(uiPrefix, "uiPrefix is null");
 
-    String singularityPrefix = configuration.getUiConfiguration().getBaseUrl().or(((SimpleServerFactory) configuration.getServerFactory()).getApplicationContextPath());
-    if (singularityPrefix.endsWith("/")) {
-      singularityPrefix = singularityPrefix.substring(0, singularityPrefix.length() - 1);
+    String serverRoot = configuration.getUiConfiguration().getBaseUrl().or(((SimpleServerFactory) configuration.getServerFactory()).getApplicationContextPath());
+    if (serverRoot.endsWith("/")) {
+      serverRoot = serverRoot.substring(0, serverRoot.length() - 1);
     }
 
-    appRoot = String.format("%s%s", singularityPrefix, uiPrefix);
-    staticRoot = String.format("%s/static", singularityPrefix);
-    apiRoot = String.format("%s%s", singularityPrefix, SingularityService.API_BASE_PATH);
 
-    title = configuration.getUiConfiguration().getTitle();
+    this.serverRoot = serverRoot;
+    this.appRoot = String.format("%s%s", serverRoot, uiPrefix);
+    this.staticRoot = String.format("%s/static", serverRoot);
+    this.apiRoot = String.format("%s%s", serverRoot, SingularityService.API_BASE_PATH);
 
-    slaveHttpPort = configuration.getMesosConfiguration().getSlaveHttpPort();
-    slaveHttpsPort = configuration.getMesosConfiguration().getSlaveHttpsPort().orNull();
+    this.title = configuration.getUiConfiguration().getTitle();
 
-    defaultCpus = configuration.getMesosConfiguration().getDefaultCpus();
-    defaultMemory = configuration.getMesosConfiguration().getDefaultMemory();
+    this.slaveHttpPort = configuration.getMesosConfiguration().getSlaveHttpPort();
+    this.slaveHttpsPort = configuration.getMesosConfiguration().getSlaveHttpsPort().orNull();
 
-    hideNewDeployButton = configuration.getUiConfiguration().isHideNewDeployButton();
-    hideNewRequestButton = configuration.getUiConfiguration().isHideNewRequestButton();
+    this.defaultCpus = configuration.getMesosConfiguration().getDefaultCpus();
+    this.defaultMemory = configuration.getMesosConfiguration().getDefaultMemory();
+
+    this.hideNewDeployButton = configuration.getUiConfiguration().isHideNewDeployButton();
+    this.hideNewRequestButton = configuration.getUiConfiguration().isHideNewRequestButton();
 
     navColor = configuration.getUiConfiguration().getNavColor();
   }
@@ -60,6 +63,10 @@ public class IndexView extends View {
 
   public String getStaticRoot() {
     return staticRoot;
+  }
+
+  public String getServerRoot() {
+    return serverRoot;
   }
 
   public String getApiRoot() {
