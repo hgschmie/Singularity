@@ -374,8 +374,7 @@
 
               <outputTemplate>${basedir}/../SingularityUI/app/assets/api-docs/markdown.mustache</outputTemplate>
               <mustacheFileRoot>${basedir}/../SingularityUI/app/assets/api-docs</mustacheFileRoot>
-              <outputPath>${basedir}/../Docs/reference/api.md</outputPath>
-              <sortApis>true</sortApis>
+              <outputPath>${project.build.directory}/classes/assets/api-docs/index.html</outputPath>
             </apiSource>
             <apiSource>
               <locations>com.hubspot.singularity.config</locations>
