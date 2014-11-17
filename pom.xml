@@ -10,7 +10,7 @@
 
   <groupId>com.hubspot</groupId>
   <artifactId>Singularity</artifactId>
-  <version>0.4.1-SNAPSHOT</version>
+  <version>0.4.1-GRPN-2-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <scm>
@@ -30,6 +30,19 @@
       <email>tpetr@hubspot.com</email>
     </developer>
   </developers>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <name>Groupon Snapshots Repository</name>
+            <url>http://nexus-dev/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>releases</id>
+            <name>Groupon Releases Repository</name>
+            <url>http://nexus-dev/content/repositories/releases</url>
+        </repository>
+    </distributionManagement>
 
   <properties>
     <project.jdk7.home>${env.JAVA7_HOME}</project.jdk7.home>
