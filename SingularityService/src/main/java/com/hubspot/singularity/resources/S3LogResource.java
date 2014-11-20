@@ -52,6 +52,7 @@ import com.hubspot.singularity.data.DeployManager;
 import com.hubspot.singularity.data.TaskManager;
 import com.hubspot.singularity.data.history.HistoryManager;
 import com.hubspot.singularity.data.history.RequestHistoryHelper;
+import com.hubspot.singularity.data.transcoders.IdTranscoder;
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
@@ -79,8 +80,9 @@ public class S3LogResource extends AbstractHistoryResource {
   };
 
   @Inject
-  public S3LogResource(HistoryManager historyManager, RequestHistoryHelper requestHistoryHelper, TaskManager taskManager, DeployManager deployManager, Optional<S3Service> s3, Optional<S3Configuration> configuration) {
-    super(historyManager, taskManager, deployManager);
+  public S3LogResource(HistoryManager historyManager, RequestHistoryHelper requestHistoryHelper, TaskManager taskManager, DeployManager deployManager, Optional<S3Service> s3,
+      Optional<S3Configuration> configuration, final IdTranscoder<SingularityTaskId> singularityTaskIdTranscoder) {
+    super(historyManager, taskManager, deployManager, singularityTaskIdTranscoder);
     this.s3 = s3;
     this.deployManager = deployManager;
     this.configuration = configuration;
