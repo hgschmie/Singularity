@@ -24,7 +24,7 @@ import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import com.hubspot.mesos.JavaUtils;
 import com.hubspot.mesos.MesosUtils;
-import com.hubspot.mesos.Resources;
+import com.hubspot.mesos.SingularityResourceRequest;
 import com.hubspot.singularity.ExtendedTaskState;
 import com.hubspot.singularity.SingularityCreateResult;
 import com.hubspot.singularity.SingularityMainModule;
@@ -50,7 +50,7 @@ public class SingularityMesosScheduler implements Scheduler {
 
   private static final Logger LOG = LoggerFactory.getLogger(SingularityMesosScheduler.class);
 
-  private final Resources defaultResources;
+  private final List<SingularityResourceRequest> defaultResources;
   private final TaskManager taskManager;
   private final DeployManager deployManager;
   private final SingularityScheduler scheduler;
@@ -72,7 +72,7 @@ public class SingularityMesosScheduler implements Scheduler {
       SingularitySchedulerPriority schedulerPriority, SingularityNewTaskChecker newTaskChecker, SingularityMesosTaskBuilder mesosTaskBuilder, SingularityLogSupport logSupport,
       Provider<SingularitySchedulerStateCache> stateCacheProvider, SingularityHealthchecker healthchecker, DeployManager deployManager,
       @Named(SingularityMainModule.SERVER_ID_PROPERTY) String serverId, SchedulerDriverSupplier schedulerDriverSupplier, final IdTranscoder<SingularityTaskId> taskIdTranscoder) {
-    this.defaultResources = new Resources(mesosConfiguration.getDefaultCpus(), mesosConfiguration.getDefaultMemory(), 0);
+    this.defaultResources = mesosConfiguration.getDefaultResources();
     this.taskManager = taskManager;
     this.deployManager = deployManager;
     this.schedulerPriority = schedulerPriority;
@@ -105,8 +105,7 @@ public class SingularityMesosScheduler implements Scheduler {
     LOG.info("Received {} offer(s)", offers.size());
 
     for (Offer offer : offers) {
-      LOG.debug("Received offer from {} ({}) for {} cpu(s), {} memory, and {} ports", offer.getHostname(), offer.getSlaveId().getValue(), MesosUtils.getNumCpus(offer), MesosUtils.getMemory(offer),
-          MesosUtils.getNumPorts(offer));
+      MesosUtils.displayResources(offer);
     }
 
     final long start = System.currentTimeMillis();
@@ -191,11 +190,7 @@ public class SingularityMesosScheduler implements Scheduler {
   private Optional<SingularityTask> match(Collection<SingularityTaskRequest> taskRequests, SingularitySchedulerStateCache stateCache, SingularityOfferHolder offerHolder) {
 
     for (SingularityTaskRequest taskRequest : taskRequests) {
-      Resources taskResources = defaultResources;
-
-      if (taskRequest.getDeploy().getResources().isPresent()) {
-        taskResources = taskRequest.getDeploy().getResources().get();
-      }
+      List<SingularityResourceRequest> taskResources = taskRequest.getDeploy().getResourceRequestList().or(defaultResources);
 
       LOG.trace("Attempting to match task {} resources {} with remaining offer resources {}", taskRequest.getPendingTask().getPendingTaskId(), taskResources, offerHolder.getCurrentResources());
 
