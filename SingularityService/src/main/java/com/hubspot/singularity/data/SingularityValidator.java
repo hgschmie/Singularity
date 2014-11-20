@@ -16,10 +16,10 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
-import com.hubspot.mesos.Resources;
 import com.hubspot.mesos.SingularityDockerInfo;
 import com.hubspot.mesos.SingularityDockerPortMapping;
 import com.hubspot.mesos.SingularityPortMappingType;
+import com.hubspot.mesos.SingularityResourceRequest;
 import com.hubspot.singularity.ScheduleType;
 import com.hubspot.singularity.SingularityDeploy;
 import com.hubspot.singularity.SingularityDeployBuilder;
@@ -45,7 +45,7 @@ public class SingularityValidator {
   private final boolean createDeployIds;
   private final int deployIdLength;
   private final DeployHistoryHelper deployHistoryHelper;
-  private final Resources defaultResources;
+  private final List<SingularityResourceRequest> defaultResources;
 
   @Inject
   public SingularityValidator(SingularityConfiguration configuration, DeployHistoryHelper deployHistoryHelper) {
@@ -58,8 +58,7 @@ public class SingularityValidator {
 
     this.defaultCpus = configuration.getMesosConfiguration().getDefaultCpus();
     this.defaultMemoryMb = configuration.getMesosConfiguration().getDefaultMemory();
-
-    defaultResources = new Resources(defaultCpus, defaultMemoryMb, 0);
+    this.defaultResources = configuration.getMesosConfiguration().getDefaultResources();
 
     this.maxCpusPerInstance = configuration.getMesosConfiguration().getMaxNumCpusPerInstance();
     this.maxCpusPerRequest = configuration.getMesosConfiguration().getMaxNumCpusPerRequest();
@@ -76,8 +75,11 @@ public class SingularityValidator {
 
   private void checkForIllegalResources(SingularityRequest request, SingularityDeploy deploy) {
     int instances = request.getInstancesSafe();
-    double cpusPerInstance = deploy.getResources().or(defaultResources).getCpus();
-    double memoryMbPerInstance = deploy.getResources().or(defaultResources).getMemoryMb();
+
+    List<SingularityResourceRequest> resources = deploy.getResourceRequestList().or(defaultResources);
+
+    final double cpusPerInstance = SingularityResourceRequest.findNumberResourceRequest(resources, SingularityResourceRequest.CPU_RESOURCE_NAME, defaultCpus).doubleValue();
+    final double memoryMbPerInstance = SingularityResourceRequest.findNumberResourceRequest(resources, SingularityResourceRequest.MEMORY_RESOURCE_NAME, defaultMemoryMb).doubleValue();
 
     checkBadRequest(cpusPerInstance > 0, "Request must have more than 0 cpus");
     checkBadRequest(memoryMbPerInstance > 0, "Request must have more than 0 memoryMb");
@@ -131,7 +133,7 @@ public class SingularityValidator {
         checkBadRequest(request.getScheduleType().or(ScheduleType.QUARTZ) == ScheduleType.QUARTZ, "If using quartzSchedule specify scheduleType QUARTZ or leave it blank");
       }
 
-      if (request.getQuartzSchedule().isPresent() || (request.getScheduleType().isPresent() && request.getScheduleType().get() == ScheduleType.QUARTZ)) {
+      if (request.getQuartzSchedule().isPresent() || request.getScheduleType().isPresent() && request.getScheduleType().get() == ScheduleType.QUARTZ) {
         quartzSchedule = originalSchedule;
       } else {
         checkBadRequest(request.getScheduleType().or(ScheduleType.CRON) == ScheduleType.CRON, "If not using quartzSchedule specify scheduleType CRON or leave it blank");
@@ -210,9 +212,12 @@ public class SingularityValidator {
   }
 
   private void checkDocker(SingularityDeploy deploy) {
-    if (deploy.getResources().isPresent() && deploy.getContainerInfo().get().getDocker().isPresent()) {
+    Optional<List<SingularityResourceRequest>> resources = deploy.getResourceRequestList();
+
+    if (resources.isPresent() && deploy.getContainerInfo().get().getDocker().isPresent()) {
       final SingularityDockerInfo dockerInfo = deploy.getContainerInfo().get().getDocker().get();
-      final int numPorts = deploy.getResources().get().getNumPorts();
+
+      int numPorts = SingularityResourceRequest.findNumberResourceRequest(resources.get(), SingularityResourceRequest.PORT_COUNT_RESOURCE_NAME, 0).intValue();
 
       if (!dockerInfo.getPortMappings().isEmpty()) {
         checkBadRequest(dockerInfo.getNetwork().or(Protos.ContainerInfo.DockerInfo.Network.HOST) == Protos.ContainerInfo.DockerInfo.Network.BRIDGE,
@@ -241,8 +246,7 @@ public class SingularityValidator {
    *
    * Transforms unix cron into quartz compatible cron;
    *
-   * - adds seconds if not included
-   * - switches either day of month or day of week to ?
+   * - adds seconds if not included - switches either day of month or day of week to ?
    *
    * Field Name   Allowed Values          Allowed Special Characters
    * Seconds      0-59                    - * /
