@@ -10,12 +10,14 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
 
 import org.apache.mesos.Protos;
+import org.apache.mesos.Protos.Attribute;
 import org.apache.mesos.Protos.MasterInfo;
 import org.apache.mesos.Protos.Offer;
 import org.apache.mesos.Protos.Resource;
@@ -28,13 +30,16 @@ import org.apache.mesos.Protos.Value.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.net.InetAddresses;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -380,7 +385,7 @@ public final class MesosUtils {
     return sb.toString();
   }
 
-  public static void displayResources(Offer offer) {
+  public static void displayOffer(Offer offer) {
     if (LOG.isDebugEnabled()) {
       checkNotNull(offer, "offer is null");
 
@@ -388,6 +393,7 @@ public final class MesosUtils {
       checkState(hasAllResources(resources, STANDARD_RESOURCES), "Resource List from %s is missing one or more standard resources (%s)", offer.getSlaveId().getValue(), STANDARD_RESOURCES);
 
       LOG.debug("Offer from {} ({})", offer.getHostname(), offer.getSlaveId().getValue());
+      LOG.debug("Attributes: {}", buildAttributeMap(offer.getAttributesList()));
       LOG.debug("Primary Resources: {} CPU(s), {} MB Memory, {} available ports", getScalar(resources, CPUS), getScalar(resources, MEMORY), getNumRanges(resources, PORTS));
       LOG.debug("Additional Resources:");
 
@@ -395,5 +401,55 @@ public final class MesosUtils {
         LOG.debug("  - {}", toString(resource));
       }
     }
+  }
+
+  public static boolean doesOfferMatchAttributes(Optional<Map<String, String>> taskAttributes, List<Attribute> attributesList) {
+    checkNotNull(taskAttributes, "taskAttributes is null");
+    checkNotNull(attributesList, "attributesList is null");
+
+    if (!taskAttributes.isPresent()) {
+      return true;
+    }
+
+    final ImmutableMap<String, String> offerAttributes = buildAttributeMap(attributesList);
+    for (Map.Entry<String, String> requestedAttribute : taskAttributes.get().entrySet()) {
+      final String key = requestedAttribute.getKey();
+
+      if (!offerAttributes.containsKey(key)) {
+        return false;
+      }
+      else if (!requestedAttribute.getValue().equals(offerAttributes.get(key))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static ImmutableMap<String, String> buildAttributeMap(Iterable<Attribute> attributes) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+
+    for (Attribute attribute : attributes) {
+      if (attribute.hasText()) {
+        builder.put(attribute.getName(), attribute.getText().getValue());
+      }
+      else if (attribute.hasScalar()) {
+        builder.put(attribute.getName(), Double.toString(attribute.getScalar().getValue()));
+      }
+      else {
+        LOG.warn("Attribute {} is not a scalar or text", attribute);
+      }
+    }
+
+    return builder.build();
+  }
+
+  private static Function<? super Attribute, String> getAttributeNameFunction() {
+    return new Function<Attribute, String>() {
+
+      @Override
+      public String apply(@Nonnull Attribute attribute) {
+        return attribute.getName();
+      }
+    };
   }
 }
