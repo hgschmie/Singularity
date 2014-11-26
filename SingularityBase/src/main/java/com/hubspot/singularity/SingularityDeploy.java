@@ -35,6 +35,7 @@ public class SingularityDeploy {
   private final Optional<String> customExecutorSource;
   private final Optional<Resources> resources;
   private final Optional<List<SingularityResourceRequest>> requestedResources;
+  private final Optional<Map<String, String>> requestedAttributes;
 
   private final Optional<String> command;
   private final Optional<List<String>> arguments;
@@ -70,6 +71,7 @@ public class SingularityDeploy {
       @JsonProperty("customExecutorSource") Optional<String> customExecutorSource,
       @JsonProperty("resources") Optional<Resources> resources,
       @JsonProperty("requestedResources") Optional<List<SingularityResourceRequest>> requestedResources,
+      @JsonProperty("requestedAttributes") Optional<Map<String, String>> requestedAttributes,
       @JsonProperty("env") Optional<Map<String, String>> env,
       @JsonProperty("uris") Optional<List<String>> uris,
       @JsonProperty("metadata") Optional<Map<String, String>> metadata,
@@ -91,6 +93,7 @@ public class SingularityDeploy {
     this.arguments = arguments;
     this.resources = resources;
     this.requestedResources = requestedResources;
+    this.requestedAttributes = requestedAttributes;
 
     this.containerInfo = containerInfo;
 
@@ -126,6 +129,7 @@ public class SingularityDeploy {
     .setArguments(copyOfList(arguments))
     .setResources(resources)
     .setRequestedResources(requestedResources)
+    .setRequestedAttributes(requestedAttributes)
     .setContainerInfo(containerInfo)
     .setCustomExecutorCmd(customExecutorCmd)
     .setCustomExecutorId(customExecutorId)
@@ -205,6 +209,11 @@ public class SingularityDeploy {
   @ApiModelProperty(required = false, value = "Resources required for this deploy.")
   public Optional<List<SingularityResourceRequest>> getRequestedResources() {
     return requestedResources;
+  }
+
+  @ApiModelProperty(required = false, value = "Attributes required for this deploy.")
+  public Optional<Map<String, String>> getRequestedAttributes() {
+    return requestedAttributes;
   }
 
   @ApiModelProperty(required = false, value = "Command to execute for this deployment.")

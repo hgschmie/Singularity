@@ -5,6 +5,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Singleton;
@@ -105,7 +106,7 @@ public class SingularityMesosScheduler implements Scheduler {
     LOG.info("Received {} offer(s)", offers.size());
 
     for (Offer offer : offers) {
-      MesosUtils.displayResources(offer);
+      MesosUtils.displayOffer(offer);
     }
 
     final long start = System.currentTimeMillis();
@@ -190,14 +191,17 @@ public class SingularityMesosScheduler implements Scheduler {
   private Optional<SingularityTask> match(Collection<SingularityTaskRequest> taskRequests, SingularitySchedulerStateCache stateCache, SingularityOfferHolder offerHolder) {
 
     for (SingularityTaskRequest taskRequest : taskRequests) {
+      Optional<Map<String, String>> taskAttributes = taskRequest.getDeploy().getRequestedAttributes();
+
       List<SingularityResourceRequest> taskResources = taskRequest.getDeploy().getResourceRequestList().or(defaultResources);
 
       LOG.trace("Attempting to match task {} resources {} with remaining offer resources {}", taskRequest.getPendingTask().getPendingTaskId(), taskResources, offerHolder.getCurrentResources());
 
+      final boolean matchAttributes = MesosUtils.doesOfferMatchAttributes(taskAttributes, offerHolder.getOffer().getAttributesList());
       final boolean matchesResources = MesosUtils.doesOfferMatchResources(taskResources, offerHolder.getCurrentResources());
       final SlaveMatchState slaveMatchState = slaveAndRackManager.doesOfferMatch(offerHolder.getOffer(), taskRequest, stateCache);
 
-      if (matchesResources && slaveMatchState.isMatchAllowed()) {
+      if (matchAttributes && matchesResources && slaveMatchState.isMatchAllowed()) {
         final SingularityTask task = mesosTaskBuilder.buildTask(offerHolder.getOffer(), offerHolder.getCurrentResources(), taskRequest, taskResources);
 
         LOG.trace("Accepted and built task {}", task);
@@ -213,8 +217,9 @@ public class SingularityMesosScheduler implements Scheduler {
 
         return Optional.of(task);
       } else {
-        LOG.trace("Ignoring offer {} on {} for task {}; matched resources: {}, slave match state: {}", offerHolder.getOffer().getId(), offerHolder.getOffer().getHostname(), taskRequest
-            .getPendingTask().getPendingTaskId(), matchesResources, slaveMatchState);
+        LOG.trace("Ignoring offer {} on {} for task {}; matched attributes: {}, matched resources: {}, slave match state: {}",
+            offerHolder.getOffer().getId(), offerHolder.getOffer().getHostname(),  taskRequest.getPendingTask().getPendingTaskId(),
+            matchAttributes, matchesResources, slaveMatchState);
       }
     }
 
