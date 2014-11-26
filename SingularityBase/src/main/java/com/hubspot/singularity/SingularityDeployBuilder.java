@@ -28,6 +28,7 @@ public class SingularityDeployBuilder {
   private Optional<String> customExecutorSource;
   private Optional<Resources> resources;
   private Optional<List<SingularityResourceRequest>> requestedResources;
+  private Optional<Map<String, String>> requestedAttributes;
 
   private Optional<String> command;
   private Optional<List<String>> arguments;
@@ -60,6 +61,7 @@ public class SingularityDeployBuilder {
     this.customExecutorSource = Optional.absent();
     this.resources = Optional.absent();
     this.requestedResources = Optional.absent();
+    this.requestedAttributes = Optional.absent();
     this.command = Optional.absent();
     this.arguments = Optional.absent();
     this.env = Optional.absent();
@@ -87,8 +89,9 @@ public class SingularityDeployBuilder {
       buildResources = Optional.absent();
     }
 
-    return new SingularityDeploy(requestId, id, command, arguments, containerInfo, customExecutorCmd, customExecutorId, customExecutorSource, buildResources, buildRequestedResources, env, uris, metadata, executorData, version, timestamp, deployHealthTimeoutSeconds, healthcheckUri,
-        healthcheckIntervalSeconds, healthcheckTimeoutSeconds, serviceBasePath, loadBalancerGroups, considerHealthyAfterRunningForSeconds, loadBalancerOptions, skipHealthchecksOnDeploy);
+    return new SingularityDeploy(requestId, id, command, arguments, containerInfo, customExecutorCmd, customExecutorId, customExecutorSource, buildResources, buildRequestedResources,
+        requestedAttributes, env, uris, metadata, executorData, version, timestamp, deployHealthTimeoutSeconds, healthcheckUri, healthcheckIntervalSeconds, healthcheckTimeoutSeconds,
+        serviceBasePath, loadBalancerGroups, considerHealthyAfterRunningForSeconds, loadBalancerOptions, skipHealthchecksOnDeploy);
   }
 
   public String getRequestId() {
@@ -200,6 +203,11 @@ public class SingularityDeployBuilder {
 
   public SingularityDeployBuilder setRequestedResources(Optional<List<SingularityResourceRequest>> requestedResources) {
     this.requestedResources = requestedResources;
+    return this;
+  }
+
+  public SingularityDeployBuilder setRequestedAttributes(Optional<Map<String, String>> requestedAttributes) {
+    this.requestedAttributes = requestedAttributes;
     return this;
   }
 
