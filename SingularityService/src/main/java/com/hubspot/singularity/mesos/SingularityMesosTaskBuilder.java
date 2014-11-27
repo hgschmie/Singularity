@@ -53,7 +53,7 @@ import com.hubspot.singularity.SingularityTaskRequest;
 import com.hubspot.singularity.data.ExecutorIdGenerator;
 
 @Singleton
-class SingularityMesosTaskBuilder {
+public class SingularityMesosTaskBuilder {
 
   private static final Logger LOG = LoggerFactory.getLogger(SingularityMesosTaskBuilder.class);
 

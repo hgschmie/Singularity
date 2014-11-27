@@ -31,7 +31,7 @@ import com.hubspot.singularity.data.TaskManager;
 import com.hubspot.singularity.scheduler.SingularitySchedulerStateCache;
 
 @Singleton
-class SingularitySlaveAndRackManager {
+public class SingularitySlaveAndRackManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(SingularitySlaveAndRackManager.class);
 

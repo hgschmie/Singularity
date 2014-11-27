@@ -2,6 +2,8 @@ package com.hubspot.singularity.data;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
+import com.hubspot.singularity.mesos.scheduler.ResourceStrategy;
+import com.hubspot.singularity.mesos.scheduler.standard.SingularityStandardResourceStrategy;
 
 public class SingularityDataModule extends AbstractModule {
 
@@ -17,6 +19,8 @@ public class SingularityDataModule extends AbstractModule {
     bind(TaskRequestManager.class).in(Scopes.SINGLETON);
     bind(SandboxManager.class).in(Scopes.SINGLETON);
     bind(SingularityValidator.class).in(Scopes.SINGLETON);
+
+    bind(ResourceStrategy.class).to(SingularityStandardResourceStrategy.class).in(Scopes.SINGLETON);
 
     bind(ExecutorIdGenerator.class).in(Scopes.SINGLETON);
     bind(WebhookManager.class).in(Scopes.SINGLETON);
