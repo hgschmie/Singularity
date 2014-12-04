@@ -51,7 +51,6 @@ class SingularityStartup {
   private final SingularitySlaveAndRackManager slaveAndRackManager;
   private final SingularityHealthchecker healthchecker;
   private final SingularityNewTaskChecker newTaskChecker;
-  private final DeployManager deployManager;
   private final SingularityTaskReconciliation taskReconciliation;
   private final ZkDataMigrationRunner zkDataMigrationRunner;
 
