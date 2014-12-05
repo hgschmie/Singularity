@@ -13,8 +13,11 @@ public class SingularityExecutorCleanupConfigurationLoader extends SingularityCo
   public static final String EXECUTOR_CLEANUP_RESULTS_DIRECTORY = "executor.cleanup.results.directory";
   public static final String EXECUTOR_CLEANUP_RESULTS_SUFFIX = "executor.cleanup.results.suffix";
 
+  public static final String DEFAULT_PROPERTY_FILE = "/etc/singularity.executor.cleanup.properties";
+  public static final String DEFAULT_LOG_FILE = "singularity-executor-cleanup.log";
+
   public SingularityExecutorCleanupConfigurationLoader() {
-    super("/etc/singularity.executor.cleanup.properties", Optional.of("singularity-executor-cleanup.log"));
+    super(DEFAULT_PROPERTY_FILE, Optional.of(DEFAULT_LOG_FILE));
   }
 
   @Override
