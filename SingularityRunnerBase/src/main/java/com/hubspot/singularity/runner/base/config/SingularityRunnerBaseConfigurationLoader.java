@@ -21,8 +21,10 @@ public class SingularityRunnerBaseConfigurationLoader extends SingularityConfigu
   public static final String S3_METADATA_SUFFIX = "s3uploader.metadata.suffix";
   public static final String S3_METADATA_DIRECTORY = "s3uploader.metadata.directory";
 
+  public static final String DEFAULT_PROPERTY_FILE = "/etc/singularity.base.properties";
+
   public SingularityRunnerBaseConfigurationLoader() {
-    super("/etc/singularity.base.properties", Optional.<String> absent());
+    super(DEFAULT_PROPERTY_FILE, Optional.<String>absent());
   }
 
   @Override
@@ -36,5 +38,4 @@ public class SingularityRunnerBaseConfigurationLoader extends SingularityConfigu
     properties.put(S3_METADATA_DIRECTORY, "");
     properties.put(LOG_METADATA_DIRECTORY, "");
   }
-
 }
