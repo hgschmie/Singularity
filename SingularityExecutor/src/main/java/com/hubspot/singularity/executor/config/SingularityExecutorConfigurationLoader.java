@@ -3,6 +3,7 @@ package com.hubspot.singularity.executor.config;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.hubspot.singularity.runner.base.config.SingularityConfigurationLoader;
 
@@ -56,8 +57,17 @@ public class SingularityExecutorConfigurationLoader extends SingularityConfigura
 
   public static final String MAX_TASK_THREADS = "executor.max.task.threads";
 
+  public static final String DEFAULT_PROPERTY_FILE = "/etc/singularity.executor.properties";
+  public static final String DEFAULT_LOG_FILE = "singularity-executor.log";
+
+
   public SingularityExecutorConfigurationLoader() {
-    super("/etc/singularity.executor.properties", Optional.of("singularity-executor.log"));
+    super(DEFAULT_PROPERTY_FILE, Optional.of(DEFAULT_LOG_FILE));
+  }
+
+  @VisibleForTesting
+  public SingularityExecutorConfigurationLoader(Optional<String> propertyFile) {
+    super(propertyFile, Optional.<String>absent());
   }
 
   @Override
