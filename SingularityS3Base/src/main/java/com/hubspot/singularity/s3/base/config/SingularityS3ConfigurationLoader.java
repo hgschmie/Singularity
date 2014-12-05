@@ -3,6 +3,7 @@ package com.hubspot.singularity.s3.base.config;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.hubspot.singularity.runner.base.config.SingularityConfigurationLoader;
 
@@ -19,8 +20,15 @@ public class SingularityS3ConfigurationLoader extends SingularityConfigurationLo
   public static final String LOCAL_DOWNLOAD_HTTP_PORT = "s3.downloader.http.port";
   public static final String LOCAL_DOWNLOAD_HTTP_DOWNLOAD_PATH = "s3.downloader.http.download.path";
 
+  public static final String DEFAULT_PROPERTY_FILE = "/etc/singularity.s3base.properties";
+
   public SingularityS3ConfigurationLoader() {
-    super("/etc/singularity.s3base.properties", Optional.<String> absent());
+    super(DEFAULT_PROPERTY_FILE, Optional.<String> absent());
+  }
+
+  @VisibleForTesting
+  public SingularityS3ConfigurationLoader(Optional<String> propertyFile) {
+    super(propertyFile, Optional.<String> absent());
   }
 
   @Override
