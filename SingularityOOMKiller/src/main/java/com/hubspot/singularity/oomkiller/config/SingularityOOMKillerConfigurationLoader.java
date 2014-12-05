@@ -13,8 +13,11 @@ public class SingularityOOMKillerConfigurationLoader extends SingularityConfigur
   public static final String SLAVE_HOSTNAME = "oomkiller.slave.hostname";
   public static final String CGROUP_PROCS_PATH_FORMAT = "oomkiller.cgroups.procs.path.format";
 
+  public static final String DEFAULT_PROPERTY_FILE = "/etc/singularity.oomkiller.properties";
+  public static final String DEFAULT_LOG_FILE = "singularity-oomkiller.log";
+
   public SingularityOOMKillerConfigurationLoader() {
-    super("/etc/singularity.oomkiller.properties", Optional.of("singularity-oomkiller.log"));
+    super(DEFAULT_PROPERTY_FILE, Optional.of(DEFAULT_LOG_FILE));
   }
 
   @Override

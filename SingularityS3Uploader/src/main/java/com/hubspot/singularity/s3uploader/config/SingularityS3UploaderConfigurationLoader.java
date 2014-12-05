@@ -14,8 +14,11 @@ public class SingularityS3UploaderConfigurationLoader extends SingularityConfigu
 
   public static final String EXECUTOR_MAX_UPLOAD_THREADS = "s3uploader.max.upload.threads";
 
+  public static final String DEFAULT_PROPERTY_FILE = "/etc/singularity.s3uploader.properties";
+  public static final String DEFAULT_LOG_FILE = "singularity-s3uploader.log";
+
   public SingularityS3UploaderConfigurationLoader() {
-    super("/etc/singularity.s3uploader.properties", Optional.of("singularity-s3uploader.log"));
+    super(DEFAULT_PROPERTY_FILE, Optional.of(DEFAULT_LOG_FILE));
   }
 
   @Override

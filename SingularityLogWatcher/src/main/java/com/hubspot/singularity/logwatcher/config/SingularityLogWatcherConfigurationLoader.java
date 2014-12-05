@@ -18,8 +18,11 @@ public class SingularityLogWatcherConfigurationLoader extends SingularityConfigu
 
   public static final String FLUENTD_TAG_PREFIX = "logwatcher.fluentd.tag.prefix";
 
+  public static final String DEFAULT_PROPERTY_FILE = "/etc/singularity.logwatcher.properties";
+  public static final String DEFAULT_LOG_FILE = "singularity-logwatcher.log";
+
   public SingularityLogWatcherConfigurationLoader() {
-    super("/etc/singularity.logwatcher.properties", Optional.of("singularity-logwatcher.log"));
+    super(DEFAULT_PROPERTY_FILE, Optional.of(DEFAULT_LOG_FILE));
   }
 
   @Override
