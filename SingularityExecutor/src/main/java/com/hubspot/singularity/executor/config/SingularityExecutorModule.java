@@ -1,6 +1,7 @@
 package com.hubspot.singularity.executor.config;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
@@ -10,8 +11,7 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.singularity.executor.handlebars.BashEscapedHelper;
 import com.hubspot.singularity.executor.handlebars.IfPresentHelper;
-import com.ning.http.client.AsyncHttpClient;
-import com.ning.http.client.AsyncHttpClientConfig;
+import com.squareup.okhttp.OkHttpClient;
 
 public class SingularityExecutorModule extends AbstractModule {
 
@@ -26,11 +26,10 @@ public class SingularityExecutorModule extends AbstractModule {
   @Provides
   @Singleton
   @Named(LOCAL_DOWNLOAD_HTTP_CLIENT)
-  public AsyncHttpClient providesHttpClient(SingularityExecutorConfiguration configuration) {
-    AsyncHttpClientConfig.Builder configBldr = new AsyncHttpClientConfig.Builder();
-    configBldr.setRequestTimeoutInMs((int) configuration.getLocalDownloadServiceTimeoutMillis());
-
-    return new AsyncHttpClient(configBldr.build());
+  public OkHttpClient providesHttpClient(SingularityExecutorConfiguration configuration) {
+      OkHttpClient client = new OkHttpClient();
+      client.setConnectTimeout(configuration.getLocalDownloadServiceTimeoutMillis(), TimeUnit.MILLISECONDS);
+      return client;
   }
 
   @Provides
