@@ -12,9 +12,11 @@ public class SingularityS3DownloaderConfigurationLoader extends SingularityConfi
 
   public static final String HTTP_SERVER_TIMEOUT = "s3downloader.http.timeout";
 
+  public static final String DEFAULT_PROPERTY_FILE = "/etc/singularity.s3downloader.properties";
+  public static final String DEFAULT_LOG_FILE = "singularity-s3downloader.log";
 
   public SingularityS3DownloaderConfigurationLoader() {
-    super("/etc/singularity.s3downloader.properties", Optional.of("singularity-s3downloader.log"));
+    super(DEFAULT_PROPERTY_FILE, Optional.of(DEFAULT_LOG_FILE));
   }
 
   @Override
