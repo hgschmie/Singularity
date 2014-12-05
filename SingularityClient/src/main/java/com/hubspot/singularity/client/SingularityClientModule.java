@@ -7,14 +7,15 @@ import org.apache.curator.framework.CuratorFramework;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.binder.LinkedBindingBuilder;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-import com.hubspot.horizon.HttpClient;
-import com.hubspot.horizon.HttpConfig;
-import com.hubspot.horizon.ning.NingHttpClient;
 import com.hubspot.mesos.JavaUtils;
+import com.squareup.okhttp.OkHttpClient;
 
 public class SingularityClientModule extends AbstractModule {
 
@@ -41,11 +42,6 @@ public class SingularityClientModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    ObjectMapper objectMapper = JavaUtils.newObjectMapper();
-
-    HttpClient httpClient = new NingHttpClient(HttpConfig.newBuilder().setObjectMapper(objectMapper).build());
-    bind(HttpClient.class).annotatedWith(Names.named(HTTP_CLIENT_NAME)).toInstance(httpClient);
-
     bind(SingularityClient.class).toProvider(SingularityClientProvider.class).in(Scopes.SINGLETON);
 
     if (hosts != null) {
@@ -63,5 +59,19 @@ public class SingularityClientModule extends AbstractModule {
 
   public static LinkedBindingBuilder<CuratorFramework> bindCurator(Binder binder) {
     return binder.bind(CuratorFramework.class).annotatedWith(Names.named(CURATOR_NAME));
+  }
+
+  @Provides
+  @Singleton
+  @Named(HTTP_CLIENT_NAME)
+  public OkHttpClient getOkHttpClient() {
+      OkHttpClient client = new OkHttpClient();
+      return client;
+  }
+
+  @Provides
+  @Singleton
+  public ObjectMapper getObjectMapper() {
+      return JavaUtils.newObjectMapper();
   }
 }

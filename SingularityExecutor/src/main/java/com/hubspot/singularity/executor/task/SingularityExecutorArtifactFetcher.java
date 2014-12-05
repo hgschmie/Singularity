@@ -7,7 +7,9 @@ import java.util.List;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.deploy.EmbeddedArtifact;
@@ -20,23 +22,27 @@ import com.hubspot.singularity.executor.config.SingularityExecutorModule;
 import com.hubspot.singularity.s3.base.ArtifactDownloadRequest;
 import com.hubspot.singularity.s3.base.ArtifactManager;
 import com.hubspot.singularity.s3.base.config.SingularityS3Configuration;
-import com.ning.http.client.AsyncHttpClient;
-import com.ning.http.client.AsyncHttpClient.BoundRequestBuilder;
-import com.ning.http.client.ListenableFuture;
-import com.ning.http.client.Response;
+import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.Response;
 
 public class SingularityExecutorArtifactFetcher {
 
   private static final String LOCAL_DOWNLOAD_STRING_FORMAT = "http://localhost:%s%s";
 
-  private final AsyncHttpClient localDownloadHttpClient;
+  private static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json; charset=utf-8");
+
+  private final OkHttpClient localDownloadHttpClient;
   private final String localDownloadUri;
   private final SingularityExecutorConfiguration executorConfiguration;
   private final SingularityS3Configuration s3Configuration;
   private final ObjectMapper objectMapper;
 
   @Inject
-  public SingularityExecutorArtifactFetcher(@Named(SingularityExecutorModule.LOCAL_DOWNLOAD_HTTP_CLIENT) AsyncHttpClient localDownloadHttpClient, SingularityS3Configuration s3Configuration,
+  public SingularityExecutorArtifactFetcher(@Named(SingularityExecutorModule.LOCAL_DOWNLOAD_HTTP_CLIENT) OkHttpClient localDownloadHttpClient, SingularityS3Configuration s3Configuration,
       SingularityExecutorConfiguration executorConfiguration, ObjectMapper objectMapper) {
     this.localDownloadHttpClient = localDownloadHttpClient;
     this.executorConfiguration = executorConfiguration;
@@ -108,31 +114,42 @@ public class SingularityExecutorArtifactFetcher {
     }
 
     private void downloadFilesFromLocalDownloadService(List<S3Artifact> s3Artifacts, SingularityExecutorTask task) {
-      final List<ListenableFuture<Response>> futures = Lists.newArrayListWithCapacity(s3Artifacts.size());
+      final ImmutableList.Builder<ListenableFuture<Response>> futures = ImmutableList.builder();
 
       for (S3Artifact s3Artifact : s3Artifacts) {
         ArtifactDownloadRequest artifactDownloadRequest = new ArtifactDownloadRequest(task.getTaskDefinition().getTaskDirectory(), s3Artifact);
 
         task.getLog().debug("Requesting {} from {}", artifactDownloadRequest, localDownloadUri);
 
-        BoundRequestBuilder postRequestBldr = localDownloadHttpClient.preparePost(localDownloadUri);
-
         try {
-          postRequestBldr.setBody(objectMapper.writeValueAsBytes(artifactDownloadRequest));
+          Request downloadRequest = new Request.Builder()
+          .url(localDownloadUri)
+          .post(RequestBody.create(MEDIA_TYPE_JSON, objectMapper.writeValueAsBytes(artifactDownloadRequest)))
+          .build();
+
+
+          final SettableFuture<Response> future = SettableFuture.create();
+          futures.add(future);
+
+          final Callback callback = new Callback() {
+            @Override
+            public void onResponse(Response response) throws IOException {
+              future.set(response);
+            }
+
+            @Override
+            public void onFailure(Request request, IOException e) {
+              future.setException(e);
+            }
+          };
+
+          localDownloadHttpClient.newCall(downloadRequest).enqueue(callback);
         } catch (JsonProcessingException e) {
           throw Throwables.propagate(e);
         }
-
-        try {
-          ListenableFuture<Response> future = localDownloadHttpClient.executeRequest(postRequestBldr.build());
-
-          futures.add(future);
-        } catch (IOException ioe) {
-          throw Throwables.propagate(ioe);
-        }
       }
 
-      for (ListenableFuture<Response> future : futures) {
+      for (ListenableFuture<Response> future : futures.build()) {
         Response response;
         try {
           response = future.get();
@@ -140,10 +157,10 @@ public class SingularityExecutorArtifactFetcher {
           throw Throwables.propagate(e);
         }
 
-        task.getLog().debug("Future got status code {}", response.getStatusCode());
+        task.getLog().debug("Future got status code {}", response.code());
 
-        if (response.getStatusCode() != 200) {
-          throw new IllegalStateException("Got status code:" + response.getStatusCode());
+        if (!response.isSuccessful()) {
+          throw new IllegalStateException("Got status code:" + response.code());
         }
       }
     }

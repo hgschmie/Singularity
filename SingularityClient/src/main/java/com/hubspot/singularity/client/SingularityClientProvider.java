@@ -19,19 +19,19 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
-import com.hubspot.horizon.HttpClient;
+import com.squareup.okhttp.OkHttpClient;
 
 @Singleton
 public class SingularityClientProvider implements Provider<SingularityClient> {
   private static final String DEFAULT_CONTEXT_PATH = "singularity/api";
 
-  private final HttpClient httpClient;
+  private final OkHttpClient httpClient;
 
   private String contextPath = DEFAULT_CONTEXT_PATH;
   private List<String> hosts = Collections.emptyList();
 
   @Inject
-  public SingularityClientProvider(@Named(SingularityClientModule.HTTP_CLIENT_NAME) HttpClient httpClient) {
+  public SingularityClientProvider(@Named(SingularityClientModule.HTTP_CLIENT_NAME) OkHttpClient httpClient) {
     this.httpClient = httpClient;
   }
 

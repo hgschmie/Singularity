@@ -2,6 +2,7 @@ package com.hubspot.singularity.client;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -14,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -45,6 +47,9 @@ import com.hubspot.singularity.SingularityTaskIdHistory;
 import com.hubspot.singularity.SingularityTaskRequest;
 import com.hubspot.singularity.SingularityWebhook;
 import com.hubspot.singularity.api.SingularityDeployRequest;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 
 public class SingularityClient {
 
@@ -120,20 +125,25 @@ public class SingularityClient {
   private final Provider<List<String>> hostsProvider;
   private final String contextPath;
 
-  private final HttpClient httpClient;
+  private final OkHttpClient httpClient;
+  private final ObjectMapper objectMapper;
 
   @Inject
   @Deprecated
-  public SingularityClient(@Named(SingularityClientModule.CONTEXT_PATH) String contextPath, @Named(SingularityClientModule.HTTP_CLIENT_NAME) HttpClient httpClient, @Named(SingularityClientModule.HOSTS_PROPERTY_NAME) String hosts) {
-    this(contextPath, httpClient, Arrays.asList(hosts.split(",")));
+  public SingularityClient(ObjectMapper objectMapper,
+      @Named(SingularityClientModule.CONTEXT_PATH) String contextPath,
+      @Named(SingularityClientModule.HTTP_CLIENT_NAME) OkHttpClient httpClient,
+      @Named(SingularityClientModule.HOSTS_PROPERTY_NAME) String hosts) {
+    this(contextPath, httpClient, objectMapper, Arrays.asList(hosts.split(",")));
   }
 
-  public SingularityClient(String contextPath, HttpClient httpClient, List<String> hosts) {
-    this(contextPath, httpClient, ProviderUtils.<List<String>>of(ImmutableList.copyOf(hosts)));
+  public SingularityClient(String contextPath, OkHttpClient httpClient, ObjectMapper objectMapper, List<String> hosts) {
+    this(contextPath, httpClient, objectMapper, ProviderUtils.<List<String>>of(ImmutableList.copyOf(hosts)));
   }
 
-  public SingularityClient(String contextPath, HttpClient httpClient, Provider<List<String>> hostsProvider) {
+  public SingularityClient(String contextPath, OkHttpClient httpClient, ObjectMapper objectMapper, Provider<List<String>> hostsProvider) {
     this.httpClient = httpClient;
+    this.objectMapper = objectMapper;
     this.contextPath = contextPath;
 
     this.hostsProvider = hostsProvider;
@@ -145,30 +155,22 @@ public class SingularityClient {
     return hosts.get(random.nextInt(hosts.size()));
   }
 
-  private void checkResponse(String type, HttpResponse response) {
-    if (response.isError()) {
+  private void checkResponse(String type, Response response) {
+    if (!response.isSuccessful()) {
       throw fail(type, response);
     }
   }
 
-  private SingularityClientException fail(String type, HttpResponse response) {
+  private SingularityClientException fail(String type, Response response) {
     String body = "";
 
     try {
-      body = response.getAsString();
-    } catch (Exception e) {
+      body = response.body().string();
+    } catch (IOException e) {
       LOG.warn("Unable to read body", e);
     }
 
-    String uri = "";
-
-    try {
-      uri = response.getRequest().getUrl().toString();
-    } catch (Exception e) {
-      LOG.warn("Unable to read uri", e);
-    }
-
-    throw new SingularityClientException(String.format("Failed '%s' action on Singularity (%s) - code: %s, %s", type, uri, response.getStatusCode(), body), response.getStatusCode());
+    throw new SingularityClientException(String.format("Failed '%s' action on Singularity (%s) - code: %s, %s", type, response.request().urlString(), response.code(), body), response.code());
   }
 
   private <T> Optional<T> getSingle(String uri, String type, String id, Class<T> clazz) {
@@ -178,9 +180,9 @@ public class SingularityClient {
 
     final long start = System.currentTimeMillis();
 
-    HttpResponse response = httpClient.execute(HttpRequest.newBuilder().setUrl(uri).build());
+    Response response = httpClient.newCall(new Request.Builder().url(uri).build()).execute();
 
-    if (response.getStatusCode() == 404) {
+    if (response.code() == 404) {
       return Optional.absent();
     }
 

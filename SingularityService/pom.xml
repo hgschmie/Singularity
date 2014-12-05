@@ -328,11 +328,6 @@
     </dependency>
 
     <dependency>
-      <groupId>com.hubspot</groupId>
-      <artifactId>HorizonCore</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
