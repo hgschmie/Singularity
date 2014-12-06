@@ -20,7 +20,7 @@ public class SingularityStartupTest extends SingularitySchedulerTestBase {
   private SingularityStartup startup;
 
   @Test
-  public void testFailuresInLaunchPath() {
+  public void testFailuresInLaunchPath() throws Exception {
     initRequest();
     initFirstDeploy();
 
@@ -92,7 +92,7 @@ public class SingularityStartupTest extends SingularitySchedulerTestBase {
   }
 
   @Test
-  public void testScheduledTasksDontGetRescheduledDuringRun() {
+  public void testScheduledTasksDontGetRescheduledDuringRun() throws Exception {
     initScheduledRequest();
     initFirstDeploy();
     startTask(firstDeploy);
