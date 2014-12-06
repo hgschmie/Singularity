@@ -1,6 +1,9 @@
 package com.hubspot.singularity.mesos;
 
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -20,9 +23,9 @@ import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.singularity.SingularityAbort;
@@ -36,7 +39,6 @@ public class SingularityMesosSchedulerDelegator implements Scheduler {
 
   private final SingularityExceptionNotifier exceptionNotifier;
 
-  private final SingularityMesosScheduler scheduler;
   private final SingularityStartup startup;
   private final SingularityAbort abort;
 
@@ -50,23 +52,27 @@ public class SingularityMesosSchedulerDelegator implements Scheduler {
 
   private volatile SchedulerState state;
 
-  private final List<Protos.TaskStatus> queuedUpdates;
+  private final BlockingQueue<Protos.TaskStatus> queuedUpdates = new LinkedBlockingQueue<>();
 
   private Optional<Long> lastOfferTimestamp;
   private final AtomicReference<MasterInfo> masterInfoHolder = new AtomicReference<>();
 
+  private final SchedulerDriverSupplier schedulerDriverSupplier;
+  private final Set<SingularitySchedulerParticipant> participants;
+
   @Inject
-  SingularityMesosSchedulerDelegator(@Named(SingularityMesosModule.SCHEDULER_LOCK_NAME) final Lock lock, SingularityExceptionNotifier exceptionNotifier, SingularityMesosScheduler scheduler,
-      SingularityStartup startup, SingularityAbort abort) {
-    this.exceptionNotifier = exceptionNotifier;
-
-    this.scheduler = scheduler;
-    this.startup = startup;
-    this.abort = abort;
-
-    this.queuedUpdates = Lists.newArrayList();
+  SingularityMesosSchedulerDelegator(@Named(SingularityMesosModule.SCHEDULER_LOCK_NAME) final Lock lock, final Set<SingularitySchedulerParticipant> participants,
+      final SchedulerDriverSupplier schedulerDriverSupplier, final SingularityExceptionNotifier exceptionNotifier, final SingularityStartup startup,
+      final SingularityAbort abort) {
 
     this.lock = lock;
+    this.participants = participants;
+    this.schedulerDriverSupplier = schedulerDriverSupplier;
+
+    this.exceptionNotifier = exceptionNotifier;
+
+    this.startup = startup;
+    this.abort = abort;
 
     this.stateLock = new ReentrantLock();
     this.state = SchedulerState.STARTUP;
@@ -83,77 +89,90 @@ public class SingularityMesosSchedulerDelegator implements Scheduler {
 
   public void notifyStopping() {
     LOG.info("Scheduler is moving to stopped, current state: {}", state);
-
     state = SchedulerState.STOPPED;
-
-    LOG.info("Scheduler now in state: {}", state);
-  }
-
-  private void handleUncaughtSchedulerException(Throwable t) {
-    LOG.error("Scheduler threw an uncaught exception - exiting", t);
-
-    exceptionNotifier.notify(t);
-
-    abort.abort(AbortReason.UNRECOVERABLE_ERROR);
-  }
-
-  private void startup(SchedulerDriver driver, MasterInfo masterInfo) throws Exception {
-    Preconditions.checkState(state == SchedulerState.STARTUP, "Asked to startup - but in invalid state: %s", state.name());
-
-    masterInfoHolder.set(masterInfo);
-
-    startup.startup(masterInfo, driver);
-
-    stateLock.lock(); // ensure we aren't adding queued updates. calls to status updates are now blocked.
-
-    try {
-      state = SchedulerState.RUNNING; // calls to resource offers will now block, since we are already scheduler locked.
-
-      for (Protos.TaskStatus status : queuedUpdates) {
-        scheduler.statusUpdate(driver, status);
-      }
-
-    } finally {
-      stateLock.unlock();
-    }
-  }
-
-  @Override
-  public void registered(SchedulerDriver driver, FrameworkID frameworkId, MasterInfo masterInfo) {
-    lock.lock();
-
-    try {
-      scheduler.registered(driver, frameworkId, masterInfo);
-
-      startup(driver, masterInfo);
-    } catch (Throwable t) {
-      handleUncaughtSchedulerException(t);
-    } finally {
-      lock.unlock();
-    }
-  }
-
-  @Override
-  public void reregistered(SchedulerDriver driver, MasterInfo masterInfo) {
-    lock.lock();
-
-    try {
-      scheduler.reregistered(driver, masterInfo);
-
-      startup(driver, masterInfo);
-    } catch (Throwable t) {
-      handleUncaughtSchedulerException(t);
-    } finally {
-      lock.unlock();
-    }
   }
 
   public boolean isRunning() {
     return state == SchedulerState.RUNNING;
   }
 
+  @VisibleForTesting
+  public void setRunning() {
+    state = SchedulerState.RUNNING;
+  }
+
+  private void startup(SchedulerDriver driver, MasterInfo masterInfo) {
+    Preconditions.checkState(state == SchedulerState.STARTUP, "Asked to startup - but in invalid state: %s", state.name());
+
+    try {
+      startup.startup(masterInfo, driver);
+
+      stateLock.lock(); // ensure we aren't adding queued updates. calls to status updates are now blocked.
+
+      try {
+        setRunning(); // calls to resource offers will now block, since we are already scheduler locked.
+
+        for (;;) {
+          final Protos.TaskStatus status = queuedUpdates.poll();
+          if (status == null) {
+            break; // for(;;
+          }
+
+          dispatch(new SchedulerDelegate() {
+            @Override
+            public void delegate(final SingularitySchedulerParticipant participant) throws Exception {
+              participant.statusUpdate(status);
+            }
+          });
+        }
+      } finally {
+        stateLock.unlock();
+      }
+    } catch (Throwable t) {
+      LOG.error("Startup threw an uncaught exception - exiting", t);
+      exceptionNotifier.notify(t);
+      abort.abort(AbortReason.UNRECOVERABLE_ERROR);
+    }
+  }
+
   @Override
-  public void resourceOffers(SchedulerDriver driver, List<Offer> offers) {
+  public void registered(SchedulerDriver driver, final FrameworkID frameworkId, final MasterInfo masterInfo) {
+
+    masterInfoHolder.set(masterInfo);
+    schedulerDriverSupplier.setSchedulerDriver(driver);
+
+    LOG.info("Registered driver {}, with frameworkId {} and master {}", driver, frameworkId, masterInfo);
+
+    dispatch(new SchedulerDelegate() {
+      @Override
+      public void delegate(final SingularitySchedulerParticipant participant) throws Exception {
+        participant.registered(Optional.of(frameworkId), masterInfo);
+      }
+    });
+
+    startup(driver, masterInfo);
+  }
+
+  @Override
+  public void reregistered(SchedulerDriver driver, final MasterInfo masterInfo) {
+
+    masterInfoHolder.set(masterInfo);
+    schedulerDriverSupplier.setSchedulerDriver(driver);
+
+    LOG.info("Reregistered driver {}, with master {}", driver, masterInfo);
+
+    dispatch(new SchedulerDelegate() {
+      @Override
+      public void delegate(final SingularitySchedulerParticipant participant) throws Exception {
+        participant.registered(Optional.<FrameworkID> absent(), masterInfo);
+      }
+    });
+
+    startup(driver, masterInfo);
+  }
+
+  @Override
+  public void resourceOffers(SchedulerDriver driver, final List<Offer> offers) {
     lastOfferTimestamp = Optional.of(System.currentTimeMillis());
 
     if (!isRunning()) {
@@ -166,44 +185,40 @@ public class SingularityMesosSchedulerDelegator implements Scheduler {
       return;
     }
 
-    lock.lock();
-
-    try {
-      scheduler.resourceOffers(driver, offers);
-    } catch (Throwable t) {
-      handleUncaughtSchedulerException(t);
-    } finally {
-      lock.unlock();
-    }
+    dispatch(new SchedulerDelegate() {
+      @Override
+      public void delegate(final SingularitySchedulerParticipant participant) throws Exception {
+        participant.resourceOffers(offers);
+      }
+    });
   }
 
   @Override
-  public void offerRescinded(SchedulerDriver driver, OfferID offerId) {
+  public void offerRescinded(SchedulerDriver driver, final OfferID offerId) {
     if (!isRunning()) {
       LOG.info("Ignoring offer rescind message {} because scheduler isn't running ({})", offerId, state);
       return;
     }
 
-    lock.lock();
-
-    try {
-      scheduler.offerRescinded(driver, offerId);
-    } catch (Throwable t) {
-      handleUncaughtSchedulerException(t);
-    } finally {
-      lock.unlock();
-    }
+    dispatch(new SchedulerDelegate() {
+      @Override
+      public void delegate(final SingularitySchedulerParticipant participant) throws Exception {
+        participant.offerRescinded(offerId);
+      }
+    });
   }
 
   @Override
-  public void statusUpdate(SchedulerDriver driver, TaskStatus status) {
+  public void statusUpdate(SchedulerDriver driver, final TaskStatus status) {
     stateLock.lock();
 
     try {
       if (!isRunning()) {
-        LOG.info("Scheduler is in state {}, queueing an update {} - {} queued updates so far", state.name(), status, queuedUpdates.size());
+        LOG.info("Scheduler is in state {}, queueing an update {} - {} queued updates so far.", state.name(), status, queuedUpdates.size());
 
-        queuedUpdates.add(status);
+        if (!queuedUpdates.offer(status)) {
+          LOG.warn("Could not add status {} to queue!");
+        }
 
         return;
       }
@@ -211,33 +226,27 @@ public class SingularityMesosSchedulerDelegator implements Scheduler {
       stateLock.unlock();
     }
 
-    lock.lock();
-
-    try {
-      scheduler.statusUpdate(driver, status);
-    } catch (Throwable t) {
-      handleUncaughtSchedulerException(t);
-    } finally {
-      lock.unlock();
-    }
+    dispatch(new SchedulerDelegate() {
+      @Override
+      public void delegate(final SingularitySchedulerParticipant participant) throws Exception {
+        participant.statusUpdate(status);
+      }
+    });
   }
 
   @Override
-  public void frameworkMessage(SchedulerDriver driver, ExecutorID executorId, SlaveID slaveId, byte[] data) {
+  public void frameworkMessage(SchedulerDriver driver, final ExecutorID executorId, final SlaveID slaveId, final byte[] data) {
     if (!isRunning()) {
       LOG.info("Ignoring framework message because scheduler isn't running ({})", state);
       return;
     }
 
-    lock.lock();
-
-    try {
-      scheduler.frameworkMessage(driver, executorId, slaveId, data);
-    } catch (Throwable t) {
-      handleUncaughtSchedulerException(t);
-    } finally {
-      lock.unlock();
-    }
+    dispatch(new SchedulerDelegate() {
+      @Override
+      public void delegate(final SingularitySchedulerParticipant participant) throws Exception {
+        participant.frameworkMessage(executorId, slaveId, data);
+      }
+    });
   }
 
   @Override
@@ -247,73 +256,94 @@ public class SingularityMesosSchedulerDelegator implements Scheduler {
       return;
     }
 
-    lock.lock();
+    LOG.warn("Scheduler/Driver disconnected");
+    schedulerDriverSupplier.setSchedulerDriver(null);
 
-    try {
-      scheduler.disconnected(driver);
-    } catch (Throwable t) {
-      handleUncaughtSchedulerException(t);
-    } finally {
-      lock.unlock();
-    }
+    dispatch(new SchedulerDelegate() {
+      @Override
+      public void delegate(final SingularitySchedulerParticipant participant) throws Exception {
+        participant.disconnected();
+      }
+    });
   }
 
   @Override
-  public void slaveLost(SchedulerDriver driver, SlaveID slaveId) {
+  public void slaveLost(SchedulerDriver driver, final SlaveID slaveId) {
     if (!isRunning()) {
       LOG.info("Ignoring slave lost {} because scheduler isn't running ({})", slaveId, state);
       return;
     }
 
-    lock.lock();
+    LOG.warn("Lost a slave {}", slaveId);
 
-    try {
-      scheduler.slaveLost(driver, slaveId);
-    } catch (Throwable t) {
-      handleUncaughtSchedulerException(t);
-    } finally {
-      lock.unlock();
-    }
+    dispatch(new SchedulerDelegate() {
+      @Override
+      public void delegate(final SingularitySchedulerParticipant participant) throws Exception {
+        participant.slaveLost(slaveId);
+      }
+    });
   }
 
   @Override
-  public void executorLost(SchedulerDriver driver, ExecutorID executorId, SlaveID slaveId, int status) {
+  public void executorLost(SchedulerDriver driver, final ExecutorID executorId, final SlaveID slaveId, final int status) {
     if (!isRunning()) {
       LOG.info("Ignoring executor lost {} because scheduler isn't running ({})", executorId, state);
       return;
     }
 
-    lock.lock();
+    LOG.warn("Lost an executor {} on slave {} with status {}", executorId, slaveId, status);
 
-    try {
-      scheduler.executorLost(driver, executorId, slaveId, status);
-    } catch (Throwable t) {
-      handleUncaughtSchedulerException(t);
-    } finally {
-      lock.unlock();
-    }
+    dispatch(new SchedulerDelegate() {
+      @Override
+      public void delegate(final SingularitySchedulerParticipant participant) throws Exception {
+        participant.executorLost(executorId, slaveId, status);
+      }
+    });
   }
 
   @Override
-  public void error(SchedulerDriver driver, String message) {
+  public void error(SchedulerDriver driver, final String message) {
     if (!isRunning()) {
       LOG.info("Ignoring error {} because scheduler isn't running ({})", message, state);
       return;
     }
 
+    LOG.warn("Error from mesos: {}", message);
+
+    dispatch(new SchedulerDelegate() {
+      @Override
+      public void delegate(final SingularitySchedulerParticipant participant) throws Exception {
+        participant.error(message);
+      }
+    });
+
+    abort.abort(AbortReason.MESOS_ERROR);
+  }
+
+  private interface SchedulerDelegate {
+    void delegate(SingularitySchedulerParticipant participant) throws Exception;
+  }
+
+  private void dispatch(SchedulerDelegate delegator) {
     lock.lock();
 
+    boolean exceptionCaught = false;
     try {
-      scheduler.error(driver, message);
-
-      LOG.error("Aborting due to error: {}", message);
-
-      abort.abort(AbortReason.MESOS_ERROR);
-    } catch (Throwable t) {
-      handleUncaughtSchedulerException(t);
+      for (SingularitySchedulerParticipant participant : participants) {
+        try {
+          delegator.delegate(participant);
+        } catch (Throwable t) {
+          LOG.error("Scheduler {} threw an uncaught exception - exiting", participant.getClass().getSimpleName(), t);
+          exceptionNotifier.notify(t);
+          exceptionCaught = true;
+        }
+      }
     } finally {
       lock.unlock();
     }
-  }
 
+    if (exceptionCaught) {
+      abort.abort(AbortReason.UNRECOVERABLE_ERROR);
+    }
+  }
 }

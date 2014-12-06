@@ -40,4 +40,8 @@ public class SingularityDeployRequest {
   public String toString() {
     return "SingularityDeployRequest [user=" + user + ", unpauseOnSuccessfulDeploy=" + unpauseOnSuccessfulDeploy + ", deploy=" + deploy + "]";
   }
+
+  public boolean isUnpauseOnSuccessfulDeploy() {
+    return unpauseOnSuccessfulDeploy.or(false);
+  }
 }

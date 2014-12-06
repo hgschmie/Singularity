@@ -54,7 +54,7 @@ public class HistoryPersisterTest extends SingularitySchedulerTestBase {
   }
 
   @Test
-  public void testTaskPurging() {
+  public void testTaskPurging() throws Exception {
     initRequest();
     initFirstDeploy();
 

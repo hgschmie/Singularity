@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.hubspot.singularity.ExtendedTaskState;
 import com.hubspot.mesos.json.MesosMasterSlaveObject;
 import com.hubspot.mesos.json.MesosMasterStateObject;
 import com.hubspot.singularity.MachineState;
@@ -32,11 +34,12 @@ import com.hubspot.singularity.data.AbstractMachineManager;
 import com.hubspot.singularity.data.RackManager;
 import com.hubspot.singularity.data.SlaveManager;
 import com.hubspot.singularity.data.TaskManager;
+import com.hubspot.singularity.data.transcoders.IdTranscoder;
 import com.hubspot.singularity.scheduler.SingularitySchedulerStateCache;
 import com.hubspot.singularity.sentry.SingularityExceptionNotifier;
 
 @Singleton
-class SingularitySlaveAndRackManager {
+class SingularitySlaveAndRackManager extends SingularitySchedulerParticipant {
 
   private static final Logger LOG = LoggerFactory.getLogger(SingularitySlaveAndRackManager.class);
 
@@ -49,9 +52,12 @@ class SingularitySlaveAndRackManager {
   private final RackManager rackManager;
   private final SlaveManager slaveManager;
   private final TaskManager taskManager;
+  private final Provider<SingularitySchedulerStateCache> stateCacheProvider;
+  private final IdTranscoder<SingularityTaskId> taskIdTranscoder;
 
   @Inject
-  SingularitySlaveAndRackManager(SingularityConfiguration configuration, SingularityExceptionNotifier exceptionNotifier, RackManager rackManager, SlaveManager slaveManager, TaskManager taskManager) {
+  SingularitySlaveAndRackManager(SingularityConfiguration configuration, SingularityExceptionNotifier exceptionNotifier, RackManager rackManager, SlaveManager slaveManager, TaskManager taskManager,
+      final IdTranscoder<SingularityTaskId> taskIdTranscoder, Provider<SingularitySchedulerStateCache> stateCacheProvider) {
     this.configuration = configuration;
 
     MesosConfiguration mesosConfiguration = configuration.getMesosConfiguration();
@@ -63,6 +69,8 @@ class SingularitySlaveAndRackManager {
     this.rackManager = rackManager;
     this.slaveManager = slaveManager;
     this.taskManager = taskManager;
+    this.stateCacheProvider = stateCacheProvider;
+    this.taskIdTranscoder = taskIdTranscoder;
   }
 
   public enum SlaveMatchState {
@@ -83,7 +91,32 @@ class SingularitySlaveAndRackManager {
     public boolean isMatchAllowed() {
       return isMatchAllowed;
     }
+  }
 
+  @Override
+  public void slaveLost(SlaveID slaveIdObj) {
+    final String slaveId = slaveIdObj.getValue();
+
+    Optional<SingularitySlave> slave = slaveManager.getObject(slaveId);
+
+    if (slave.isPresent()) {
+      slaveManager.changeState(slave.get(), MachineState.DEAD, Optional.<String> absent());
+
+      checkRackAfterSlaveLoss(slave.get());
+    } else {
+      LOG.warn("Lost a slave {}, but didn't know about it", slaveId);
+    }
+  }
+
+  @Override
+  public void statusUpdate(Protos.TaskStatus status) throws Exception {
+    final ExtendedTaskState taskState = ExtendedTaskState.fromTaskState(status.getState());
+    if (taskState.isDone()) {
+      final String taskId = status.getTaskId().getValue();
+      final SingularityTaskId taskIdObj = taskIdTranscoder.fromString(taskId);
+      final SingularitySchedulerStateCache stateCache = stateCacheProvider.get();
+      checkStateAfterFinishedTask(taskIdObj, status.getSlaveId().getValue(), stateCache);
+    }
   }
 
   private String getHost(String hostname) {
@@ -168,23 +201,10 @@ class SingularitySlaveAndRackManager {
         }
         break;
       case GREEDY:
+        break;
     }
 
     return SlaveMatchState.OK;
-  }
-
-  public void slaveLost(SlaveID slaveIdObj) {
-    final String slaveId = slaveIdObj.getValue();
-
-    Optional<SingularitySlave> slave = slaveManager.getObject(slaveId);
-
-    if (slave.isPresent()) {
-      slaveManager.changeState(slave.get(), MachineState.DEAD, Optional.<String> absent());
-
-      checkRackAfterSlaveLoss(slave.get());
-    } else {
-      LOG.warn("Lost a slave {}, but didn't know about it", slaveId);
-    }
   }
 
   private void checkRackAfterSlaveLoss(SingularitySlave lostSlave) {
