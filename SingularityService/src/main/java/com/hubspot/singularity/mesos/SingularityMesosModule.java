@@ -7,6 +7,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 
 public class SingularityMesosModule extends AbstractModule {
@@ -23,6 +24,11 @@ public class SingularityMesosModule extends AbstractModule {
     bind(SingularitySlaveAndRackManager.class).in(Scopes.SINGLETON);
     bind(SingularityStartup.class).in(Scopes.SINGLETON);
     bind(SchedulerDriverSupplier.class).in(Scopes.SINGLETON);
+
+    Multibinder<SingularitySchedulerParticipant> participantBinder = Multibinder.newSetBinder(binder(), SingularitySchedulerParticipant.class);
+    participantBinder.addBinding().to(SingularityMesosScheduler.class).in(Scopes.SINGLETON);
+    participantBinder.addBinding().to(SingularitySlaveAndRackManager.class).in(Scopes.SINGLETON);
+    participantBinder.addBinding().to(SingularityMesosStatusManager.class).in(Scopes.SINGLETON);
   }
 
   @Provides
