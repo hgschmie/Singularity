@@ -31,7 +31,7 @@ import com.hubspot.singularity.data.TaskManager;
 import com.hubspot.singularity.scheduler.SingularitySchedulerStateCache;
 
 @Singleton
-class SingularitySlaveAndRackManager {
+class SingularitySlaveAndRackManager extends SingularitySchedulerParticipant {
 
   private static final Logger LOG = LoggerFactory.getLogger(SingularitySlaveAndRackManager.class);
 
@@ -74,7 +74,25 @@ class SingularitySlaveAndRackManager {
     public boolean isMatchAllowed() {
       return isMatchAllowed;
     }
+  }
 
+  @Override
+  public void slaveLost(SlaveID slaveIdObj) {
+    final String slaveId = slaveIdObj.getValue();
+
+    if (isSlaveDead(slaveId) || isSlaveDecomissioning(slaveId) || !isSlaveActive(slaveId)) {
+      return;
+    }
+
+    Optional<SingularitySlave> slave = slaveManager.getActiveObject(slaveId);
+
+    if (slave.isPresent()) {
+      slaveManager.markAsDead(slaveId);
+
+      checkRackAfterSlaveLoss(slave.get());
+    } else {
+      LOG.warn("Lost a slave {}, but didn't know about it", slaveId);
+    }
   }
 
   private String getHost(String hostname) {
@@ -159,6 +177,7 @@ class SingularitySlaveAndRackManager {
         }
         break;
       case GREEDY:
+        break;
     }
 
     return SlaveMatchState.OK;
@@ -171,24 +190,6 @@ class SingularitySlaveAndRackManager {
     int slavesCleared = slaveManager.clearActive();
 
     LOG.info("Cleared {} racks and {} slaves in {}", racksCleared, slavesCleared, JavaUtils.duration(start));
-  }
-
-  public void slaveLost(SlaveID slaveIdObj) {
-    final String slaveId = slaveIdObj.getValue();
-
-    if (isSlaveDead(slaveId) || isSlaveDecomissioning(slaveId) || !isSlaveActive(slaveId)) {
-      return;
-    }
-
-    Optional<SingularitySlave> slave = slaveManager.getActiveObject(slaveId);
-
-    if (slave.isPresent()) {
-      slaveManager.markAsDead(slaveId);
-
-      checkRackAfterSlaveLoss(slave.get());
-    } else {
-      LOG.warn("Lost a slave {}, but didn't know about it", slaveId);
-    }
   }
 
   private void checkRackAfterSlaveLoss(SingularitySlave lostSlave) {

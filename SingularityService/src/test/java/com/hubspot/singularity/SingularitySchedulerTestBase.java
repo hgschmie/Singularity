@@ -1,5 +1,7 @@
 package com.hubspot.singularity;
 
+import static org.junit.Assert.assertTrue;
+
 import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -36,7 +38,7 @@ import com.hubspot.singularity.data.DeployManager;
 import com.hubspot.singularity.data.RequestManager;
 import com.hubspot.singularity.data.TaskManager;
 import com.hubspot.singularity.mesos.SchedulerDriverSupplier;
-import com.hubspot.singularity.mesos.SingularityMesosScheduler;
+import com.hubspot.singularity.mesos.SingularityMesosSchedulerDelegator;
 import com.hubspot.singularity.resources.DeployResource;
 import com.hubspot.singularity.resources.RequestResource;
 import com.hubspot.singularity.scheduler.SingularityCleaner;
@@ -56,16 +58,11 @@ public class SingularitySchedulerTestBase extends SingularityCuratorTestBase {
   @Inject
   protected Provider<SingularitySchedulerStateCache> stateCacheProvider;
   @Inject
-  protected SingularityMesosScheduler sms;
-  @Inject
   protected RequestManager requestManager;
   @Inject
   protected DeployManager deployManager;
   @Inject
   protected TaskManager taskManager;
-  @Inject
-  protected SchedulerDriverSupplier driverSupplier;
-  protected SchedulerDriver driver;
   @Inject
   protected SingularityScheduler scheduler;
   @Inject
@@ -92,6 +89,10 @@ public class SingularitySchedulerTestBase extends SingularityCuratorTestBase {
   protected SingularityMailer mailer;
   @Inject
   protected SingularityScheduledJobPoller scheduledJobPoller;
+  @Inject
+  protected SingularityMesosSchedulerDelegator mesosScheduler;
+  @Inject
+  protected SchedulerDriverSupplier schedulerDriverSupplier;
 
   @Inject
   @Named(SingularityMainModule.SERVER_ID_PROPERTY)
@@ -110,6 +111,11 @@ public class SingularitySchedulerTestBase extends SingularityCuratorTestBase {
 
   protected Optional<String> user = Optional.absent();
 
+  @Before
+  public void startUp() throws Exception {
+    mesosScheduler.setRunning();
+  }
+
   @After
   public void teardown() throws Exception {
     if (httpClient != null) {
@@ -117,9 +123,10 @@ public class SingularitySchedulerTestBase extends SingularityCuratorTestBase {
     }
   }
 
-  @Before
-  public final void setupDriver() throws Exception {
-    driver = driverSupplier.get().get();
+  protected SchedulerDriver getSchedulerDriver() {
+    Optional<SchedulerDriver> schedulerDriver = schedulerDriverSupplier.get();
+    assertTrue("No scheduler driver present!", schedulerDriver.isPresent());
+    return schedulerDriver.get();
   }
 
   protected Offer createOffer(double cpus, double memory) {
@@ -142,7 +149,7 @@ public class SingularitySchedulerTestBase extends SingularityCuratorTestBase {
         .build();
   }
 
-  protected SingularityTask launchTask(SingularityRequest request, SingularityDeploy deploy, int instanceNo, TaskState initialTaskState) {
+  protected SingularityTask launchTask(SingularityRequest request, SingularityDeploy deploy, int instanceNo, TaskState initialTaskState) throws Exception {
     return launchTask(request, deploy, System.currentTimeMillis(), instanceNo, initialTaskState);
   }
 
@@ -178,7 +185,7 @@ public class SingularitySchedulerTestBase extends SingularityCuratorTestBase {
     return prepTask(request, firstDeploy, System.currentTimeMillis(), 1);
   }
 
-  protected SingularityTask launchTask(SingularityRequest request, SingularityDeploy deploy, long launchTime, int instanceNo, TaskState initialTaskState) {
+  protected SingularityTask launchTask(SingularityRequest request, SingularityDeploy deploy, long launchTime, int instanceNo, TaskState initialTaskState) throws Exception {
     SingularityTask task = prepTask(request, deploy, launchTime, instanceNo);
 
     taskManager.createTaskAndDeletePendingTask(task);
@@ -188,7 +195,7 @@ public class SingularitySchedulerTestBase extends SingularityCuratorTestBase {
     return task;
   }
 
-  protected void statusUpdate(SingularityTask task, TaskState state, Optional<Long> timestamp) {
+  protected void statusUpdate(SingularityTask task, TaskState state, Optional<Long> timestamp) throws Exception {
     TaskStatus.Builder bldr = TaskStatus.newBuilder()
         .setTaskId(task.getMesosTask().getTaskId())
         .setState(state);
@@ -197,10 +204,10 @@ public class SingularitySchedulerTestBase extends SingularityCuratorTestBase {
       bldr.setTimestamp(timestamp.get() / 1000);
     }
 
-    sms.statusUpdate(driver, bldr.build());
+    mesosScheduler.statusUpdate(getSchedulerDriver(), bldr.build());
   }
 
-  protected void statusUpdate(SingularityTask task, TaskState state) {
+  protected void statusUpdate(SingularityTask task, TaskState state) throws Exception {
     statusUpdate(task, state, Optional.<Long> absent());
   }
 
@@ -267,16 +274,16 @@ public class SingularitySchedulerTestBase extends SingularityCuratorTestBase {
     deployManager.saveNewRequestDeployState(new SingularityRequestDeployState(requestId, Optional.of(marker), Optional.<SingularityDeployMarker> absent()));
   }
 
-  protected SingularityTask startTask(SingularityDeploy deploy) {
+  protected SingularityTask startTask(SingularityDeploy deploy) throws Exception {
     return startTask(deploy, 1);
   }
 
-  protected SingularityTask startTask(SingularityDeploy deploy, int instanceNo) {
+  protected SingularityTask startTask(SingularityDeploy deploy, int instanceNo) throws Exception {
     return launchTask(request, deploy, instanceNo, TaskState.TASK_RUNNING);
   }
 
-  protected void resourceOffers() {
-    sms.resourceOffers(driver, Arrays.asList(createOffer(20, 20000, "slave1", "host1"), createOffer(20, 20000, "slave2", "host2")));
+  protected void resourceOffers() throws Exception {
+    mesosScheduler.resourceOffers(getSchedulerDriver(), Arrays.asList(createOffer(20, 20000, "slave1", "host1"), createOffer(20, 20000, "slave2", "host2")));
   }
 
   protected void deploy(String deployId) {
