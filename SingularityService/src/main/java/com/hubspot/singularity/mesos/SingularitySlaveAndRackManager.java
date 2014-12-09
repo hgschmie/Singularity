@@ -94,6 +94,29 @@ class SingularitySlaveAndRackManager extends SingularitySchedulerParticipant {
   }
 
   @Override
+  public void resourceOffers(List<Protos.Offer> offers) throws Exception {
+
+    // Check whether any of the offers contains a new slave and/or rack.
+    for (Protos.Offer offer : offers) {
+      final String slaveId = offer.getSlaveId().getValue();
+      final String rackId = getRackId(offer);
+      final String host = getSlaveHost(offer);
+
+      final SingularitySlave slave = new SingularitySlave(slaveId, host, rackId);
+
+      if (check(slave, slaveManager) == CheckResult.NEW) {
+        LOG.info("Offer revealed a new slave {}", slave);
+      }
+
+      final SingularityRack rack = new SingularityRack(rackId);
+
+      if (check(rack, rackManager) == CheckResult.NEW) {
+        LOG.info("Offer revealed a new rack {}", rack);
+      }
+    }
+  }
+
+  @Override
   public void slaveLost(SlaveID slaveIdObj) {
     final String slaveId = slaveIdObj.getValue();
 
@@ -389,5 +412,4 @@ class SingularitySlaveAndRackManager extends SingularitySchedulerParticipant {
 
     return false;
   }
-
 }
