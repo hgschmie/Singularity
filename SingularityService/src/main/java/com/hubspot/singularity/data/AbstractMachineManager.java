@@ -206,15 +206,30 @@ public abstract class AbstractMachineManager<T extends SingularityMachineAbstrac
   }
 
   public boolean isActive(String objectId) {
-    return exists(getActivePath(objectId));
+    try {
+      return exists(getActivePath(objectId));
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    return false;
   }
 
   public boolean isDead(String objectId) {
-    return exists(getDeadPath(objectId));
+    try {
+      return exists(getDeadPath(objectId));
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    return false;
   }
 
   public boolean isDecomissioning(String objectId) {
-    return exists(getDecomissioningPath(objectId));
+    try {
+      return exists(getDecomissioningPath(objectId));
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    return false;
   }
 
   public int clearActive() {

@@ -105,8 +105,13 @@ public class RequestManager extends CuratorAsyncManager {
 
   public boolean cleanupRequestExists(String requestId) {
     for (RequestCleanupType type : RequestCleanupType.values()) {
-      if (checkExists(getCleanupPath(requestId, type)).isPresent()) {
-        return true;
+      try {
+        if (checkExists(getCleanupPath(requestId, type)).isPresent()) {
+          return true;
+        }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        break; // for
       }
     }
 

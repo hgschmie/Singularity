@@ -353,7 +353,12 @@ public class TaskManager extends CuratorAsyncManager {
   }
 
   public boolean taskHistoryUpdateExists(SingularityTaskHistoryUpdate taskHistoryUpdate) {
-    return exists(getUpdatePath(taskHistoryUpdate.getTaskId(), taskHistoryUpdate.getTaskState()));
+    try {
+      return exists(getUpdatePath(taskHistoryUpdate.getTaskId(), taskHistoryUpdate.getTaskState()));
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    return false;
   }
 
   public SingularityCreateResult saveTaskHistoryUpdate(SingularityTaskHistoryUpdate taskHistoryUpdate) {
@@ -365,7 +370,12 @@ public class TaskManager extends CuratorAsyncManager {
   public boolean isActiveTask(String taskId) {
     final String path = getActivePath(taskId);
 
-    return exists(path);
+    try {
+      return exists(path);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    return false;
   }
 
   public List<SingularityTaskId> getTaskIdsForRequest(String requestId) {
@@ -437,7 +447,13 @@ public class TaskManager extends CuratorAsyncManager {
   }
 
   public boolean hasNotifiedOverdue(SingularityTaskId taskId) {
-    return checkExists(getNotifiedOverduePath(taskId)).isPresent();
+    try {
+      return checkExists(getNotifiedOverduePath(taskId)).isPresent();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+
+    return false;
   }
 
   public void saveNotifiedOverdue(SingularityTaskId taskId) {

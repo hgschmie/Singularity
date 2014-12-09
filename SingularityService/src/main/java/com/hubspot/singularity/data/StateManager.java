@@ -75,6 +75,7 @@ public class StateManager extends CuratorManager {
           curator.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(path, data);
         }
       } catch (Throwable t) {
+        Throwables.propagateIfInstanceOf(t, InterruptedException.class);
         throw Throwables.propagate(t);
       }
     }

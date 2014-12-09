@@ -44,19 +44,20 @@ public abstract class CuratorManager {
     return 0;
   }
 
-  protected Optional<Stat> checkExists(String path) {
+  protected Optional<Stat> checkExists(String path) throws InterruptedException {
     try {
       Stat stat = curator.checkExists().forPath(path);
       return Optional.fromNullable(stat);
     } catch (NoNodeException nne) {
     } catch (Throwable t) {
+      Throwables.propagateIfInstanceOf(t, InterruptedException.class);
       throw Throwables.propagate(t);
     }
 
     return Optional.absent();
   }
 
-  protected boolean exists(String path) {
+  protected boolean exists(String path) throws InterruptedException {
     return checkExists(path).isPresent();
   }
 
