@@ -18,7 +18,7 @@ public class SingularityMesosModule extends AbstractModule {
   public void configure() {
     bind(SingularityDriver.class).in(Scopes.SINGLETON);
     bind(SingularityLogSupport.class).in(Scopes.SINGLETON);
-    bind(SingularityMesosScheduler.class).in(Scopes.SINGLETON);
+    bind(SingularityMesosOfferProcessor.class).in(Scopes.SINGLETON);
     bind(SingularityMesosSchedulerDelegator.class).in(Scopes.SINGLETON);
     bind(SingularityMesosTaskBuilder.class).in(Scopes.SINGLETON);
     bind(SingularitySlaveAndRackManager.class).in(Scopes.SINGLETON);
@@ -26,7 +26,7 @@ public class SingularityMesosModule extends AbstractModule {
     bind(SchedulerDriverSupplier.class).in(Scopes.SINGLETON);
 
     Multibinder<SingularitySchedulerParticipant> participantBinder = Multibinder.newSetBinder(binder(), SingularitySchedulerParticipant.class);
-    participantBinder.addBinding().to(SingularityMesosScheduler.class).in(Scopes.SINGLETON);
+    participantBinder.addBinding().to(SingularityMesosOfferProcessor.class).in(Scopes.SINGLETON);
     participantBinder.addBinding().to(SingularitySlaveAndRackManager.class).in(Scopes.SINGLETON);
     participantBinder.addBinding().to(SingularityMesosStatusManager.class).in(Scopes.SINGLETON);
   }
