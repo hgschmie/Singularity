@@ -77,6 +77,29 @@ class SingularitySlaveAndRackManager extends SingularitySchedulerParticipant {
   }
 
   @Override
+  public void resourceOffers(List<Protos.Offer> offers) throws Exception {
+
+    // Check whether any of the offers contains a new slave and/or rack.
+    for (Protos.Offer offer : offers) {
+      final String slaveId = offer.getSlaveId().getValue();
+      final String rackId = getRackId(offer);
+      final String host = getSlaveHost(offer);
+
+      SaveResultHolder slaveHolder = checkSlave(slaveId, host, rackId);
+
+      if (slaveHolder.saveResult == SaveResult.NEW) {
+        LOG.info("Offer revealed a new slave {}", slaveHolder.newObject.get());
+      }
+
+      SaveResultHolder rackHolder = checkRack(rackId);
+
+      if (rackHolder.saveResult == SaveResult.NEW) {
+        LOG.info("Offer revealed a new rack {}", rackHolder.newObject.get());
+      }
+    }
+  }
+
+  @Override
   public void slaveLost(SlaveID slaveIdObj) {
     final String slaveId = slaveIdObj.getValue();
 
@@ -333,23 +356,4 @@ class SingularitySlaveAndRackManager extends SingularitySchedulerParticipant {
   private boolean isSlaveDead(String slaveId) {
     return slaveManager.isDead(slaveId);
   }
-
-  public void checkOffer(Offer offer) {
-    final String slaveId = offer.getSlaveId().getValue();
-    final String rackId = getRackId(offer);
-    final String host = getSlaveHost(offer);
-
-    SaveResultHolder slaveHolder = checkSlave(slaveId, host, rackId);
-
-    if (slaveHolder.saveResult == SaveResult.NEW) {
-      LOG.info("Offer revealed a new slave {}", slaveHolder.newObject.get());
-    }
-
-    SaveResultHolder rackHolder = checkRack(rackId);
-
-    if (rackHolder.saveResult == SaveResult.NEW) {
-      LOG.info("Offer revealed a new rack {}", rackHolder.newObject.get());
-    }
-  }
-
 }

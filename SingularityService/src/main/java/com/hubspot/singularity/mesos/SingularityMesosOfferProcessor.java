@@ -34,9 +34,9 @@ import com.hubspot.singularity.scheduler.SingularitySchedulerPriority;
 import com.hubspot.singularity.scheduler.SingularitySchedulerStateCache;
 
 @Singleton
-public class SingularityMesosScheduler extends SingularitySchedulerParticipant {
+public class SingularityMesosOfferProcessor extends SingularitySchedulerParticipant {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SingularityMesosScheduler.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SingularityMesosOfferProcessor.class);
 
   private final List<SingularityResourceRequest> defaultResources;
   private final TaskManager taskManager;
@@ -49,7 +49,7 @@ public class SingularityMesosScheduler extends SingularitySchedulerParticipant {
   private final SchedulerDriverSupplier schedulerDriverSupplier;
 
     @Inject
-  SingularityMesosScheduler(MesosConfiguration mesosConfiguration, TaskManager taskManager, SingularityScheduler scheduler,
+  SingularityMesosOfferProcessor(MesosConfiguration mesosConfiguration, TaskManager taskManager, SingularityScheduler scheduler,
       SingularitySlaveAndRackManager slaveAndRackManager, SingularitySchedulerPriority schedulerPriority,  SingularityMesosTaskBuilder mesosTaskBuilder,
       Provider<SingularitySchedulerStateCache> stateCacheProvider, SchedulerDriverSupplier schedulerDriverSupplier) {
     this.defaultResources = mesosConfiguration.getDefaultResources();
@@ -87,10 +87,6 @@ public class SingularityMesosScheduler extends SingularitySchedulerParticipant {
     scheduler.drainPendingQueue(stateCache);
 
     final Set<Protos.OfferID> acceptedOffers = Sets.newHashSetWithExpectedSize(offers.size());
-
-    for (Protos.Offer offer : offers) {
-      slaveAndRackManager.checkOffer(offer);
-    }
 
     int numDueTasks = 0;
 
