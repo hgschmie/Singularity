@@ -1,5 +1,8 @@
 package com.hubspot.singularity.mesos;
 
+import static com.google.common.base.Preconditions.checkState;
+
+import static com.hubspot.mesos.SingularityResourceRequest.findNumberResourceRequest;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
 
@@ -87,13 +90,13 @@ class SingularityMesosTaskBuilder {
     // Do the easy stuff first.
 
     // CPU allocation
-    final Number cpus = SingularityResourceRequest.findNumberResourceRequest(desiredTaskResources, SingularityResourceRequest.CPU_RESOURCE_NAME, -1);
+    final Number cpus = findNumberResourceRequest(desiredTaskResources, SingularityResourceRequest.CPU_RESOURCE_NAME, -1);
     if (cpus.intValue() > 0) {
       bldr.addResources(MesosUtils.getCpuResource(cpus.doubleValue()));
     }
 
     // Memory allocation
-    final Number memory = SingularityResourceRequest.findNumberResourceRequest(desiredTaskResources, SingularityResourceRequest.MEMORY_RESOURCE_NAME, -1);
+    final Number memory = findNumberResourceRequest(desiredTaskResources, SingularityResourceRequest.MEMORY_RESOURCE_NAME, -1);
     if (memory.intValue() > 0) {
       bldr.addResources(MesosUtils.getMemoryResource(memory.doubleValue()));
     }
@@ -104,15 +107,16 @@ class SingularityMesosTaskBuilder {
 
 
     // Do the port allocation dance.
-    final int portCount = SingularityResourceRequest.findNumberResourceRequest(desiredTaskResources, SingularityResourceRequest.PORT_COUNT_RESOURCE_NAME, 0).intValue();
+    final int portCount = findNumberResourceRequest(desiredTaskResources, SingularityResourceRequest.PORT_COUNT_RESOURCE_NAME, 0).intValue();
 
     int[] ports = new int[0];
 
     if (portCount > 0) {
-      Resource portsResource = MesosUtils.getPortsResource(portCount, availableResources);
-      bldr.addResources(portsResource);
+      Optional<Resource> portsResource = MesosUtils.getPortsResource(portCount, availableResources);
+      checkState(portsResource.isPresent(), "No ports resources found, but buildTask was called after match is true!");
+      bldr.addResources(portsResource.get());
 
-      ports = MesosUtils.getPorts(portsResource, portCount);
+      ports = MesosUtils.getPorts(portsResource.get(), portCount);
     }
 
     final Optional<SingularityContainerInfo> containerInfo = taskRequest.getDeploy().getContainerInfo();

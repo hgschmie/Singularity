@@ -1,5 +1,6 @@
 package com.hubspot.mesos;
 
+import static com.hubspot.mesos.SingularityResourceRequest.findNumberResourceRequest;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -8,7 +9,6 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -32,13 +32,14 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.net.InetAddresses;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -63,27 +64,27 @@ public final class MesosUtils {
     return resource.getScalar().getValue();
   }
 
-  private static double getScalar(List<Resource> resources, String name) {
+  private static Optional<Double> getScalar(List<Resource> resources, String name) {
     checkNotNull(resources, "resources is null");
     checkNotNull(name, "name is null");
 
     for (Resource resource : resources) {
       if (resource.hasName() && resource.getName().equals(name) && resource.hasScalar()) {
-        return getScalar(resource);
+        return Optional.of(getScalar(resource));
       }
     }
 
-    return 0;
+    return Optional.absent();
   }
 
-  private static Ranges getRanges(List<Resource> resources, String name) {
+  private static Optional<Ranges> getRanges(List<Resource> resources, String name) {
     for (Resource r : resources) {
       if (r.hasName() && r.getName().equals(name) && r.hasRanges()) {
-        return r.getRanges();
+        return Optional.of(r.getRanges());
       }
     }
 
-    return null;
+    return Optional.absent();
   }
 
   private static int getRangeCount(Ranges ranges) {
@@ -97,18 +98,14 @@ public final class MesosUtils {
     return totalRanges;
   }
 
-  private static Ranges getRanges(TaskInfo taskInfo, String name) {
+  private static Optional<Ranges> getRanges(TaskInfo taskInfo, String name) {
     return getRanges(taskInfo.getResourcesList(), name);
   }
 
   private static int getNumRanges(List<Resource> resources, String name) {
-    Ranges ranges = getRanges(resources, name);
+    Optional<Ranges> ranges = getRanges(resources, name);
 
-    if (ranges == null) {
-      return 0;
-    }
-
-    return getRangeCount(ranges);
+    return (ranges.isPresent()) ? getRangeCount(ranges.get()) : 0;
   }
 
   public static Resource getCpuResource(double cpus) {
@@ -137,32 +134,36 @@ public final class MesosUtils {
   }
 
   public static List<Long> getAllPorts(TaskInfo taskInfo) {
-    final List<Long> ports = Lists.newArrayList();
 
-    final Ranges ranges = getRanges(taskInfo, PORTS);
+    final Optional<Ranges> ranges = getRanges(taskInfo, PORTS);
+    if (!ranges.isPresent()) {
+      return ImmutableList.of();
+    }
 
-    if (ranges != null) {
-      for (Range range : ranges.getRangeList()) {
-        for (long port = range.getBegin(); port < range.getEnd(); port++) {
-          ports.add(port);
-        }
+    ImmutableList.Builder<Long> builder = ImmutableList.builder();
+
+    for (Range range : ranges.get().getRangeList()) {
+      for (long port = range.getBegin(); port < range.getEnd(); port++) {
+        builder.add(port);
       }
     }
 
-    return ports;
+    return builder.build();
   }
 
-  public static Resource getPortsResource(int numPorts, Offer offer) {
+  public static Optional<Resource> getPortsResource(int numPorts, Offer offer) {
     return getPortsResource(numPorts, offer.getResourcesList());
   }
 
-  public static Resource getPortsResource(int numPorts, List<Resource> resources) {
-    Ranges ranges = getRanges(resources, PORTS);
-    Preconditions.checkState(ranges != null, "Ports %s should have existed in resources %s", PORTS, resources);
+  public static Optional<Resource> getPortsResource(int numPorts, List<Resource> resources) {
+    Optional<Ranges> ranges = getRanges(resources, PORTS);
 
-    Ranges.Builder rangesBldr = buildRangeResource(ranges, numPorts);
+    if (!ranges.isPresent()) {
+      return Optional.absent();
+    }
 
-    return Resource.newBuilder().setType(Type.RANGES).setName(PORTS).setRanges(rangesBldr).build();
+    Ranges.Builder rangesBldr = buildRangeResource(ranges.get(), numPorts);
+    return Optional.of(Resource.newBuilder().setType(Type.RANGES).setName(PORTS).setRanges(rangesBldr).build());
   }
 
   public static Ranges.Builder buildRangeResource(Ranges ranges, int resourceCount) {
@@ -201,19 +202,19 @@ public final class MesosUtils {
     return Resource.newBuilder().setName(name).setType(Value.Type.SCALAR).setScalar(Value.Scalar.newBuilder().setValue(value).build()).build();
   }
 
-  public static double getNumCpus(Offer offer) {
+  public static Optional<Double> getNumCpus(Offer offer) {
     return getNumCpus(offer.getResourcesList());
   }
 
-  public static double getMemory(Offer offer) {
+  public static Optional<Double>  getMemory(Offer offer) {
     return getMemory(offer.getResourcesList());
   }
 
-  public static double getNumCpus(List<Resource> resources) {
+  public static Optional<Double> getNumCpus(List<Resource> resources) {
     return getScalar(resources, CPUS);
   }
 
-  public static double getMemory(List<Resource> resources) {
+  public static Optional<Double>  getMemory(List<Resource> resources) {
     return getScalar(resources, MEMORY);
   }
 
@@ -227,24 +228,34 @@ public final class MesosUtils {
 
   public static boolean doesOfferMatchResources(List<SingularityResourceRequest> requestedResources, List<Resource> offerResources) {
 
-    double numCpus = getNumCpus(offerResources);
+    Optional<Double> numCpus = getNumCpus(offerResources);
 
-    if (SingularityResourceRequest.hasResource(requestedResources, SingularityResourceRequest.CPU_RESOURCE_NAME)
-        && numCpus < SingularityResourceRequest.findNumberResourceRequest(requestedResources, SingularityResourceRequest.CPU_RESOURCE_NAME, Double.MAX_VALUE).doubleValue()) {
-      return false;
+    if (SingularityResourceRequest.hasResource(requestedResources, SingularityResourceRequest.CPU_RESOURCE_NAME)) {
+      if (!numCpus.isPresent()) {
+        return false;
+      }
+
+      if (numCpus.get() < findNumberResourceRequest(requestedResources, SingularityResourceRequest.CPU_RESOURCE_NAME, Double.MAX_VALUE).doubleValue()) {
+        return false;
+      }
     }
 
-    double memory = getMemory(offerResources);
+    Optional<Double> memory = getMemory(offerResources);
 
-    if (SingularityResourceRequest.hasResource(requestedResources, SingularityResourceRequest.MEMORY_RESOURCE_NAME)
-        && memory < SingularityResourceRequest.findNumberResourceRequest(requestedResources, SingularityResourceRequest.MEMORY_RESOURCE_NAME, Double.MAX_VALUE).doubleValue()) {
-      return false;
+    if (SingularityResourceRequest.hasResource(requestedResources, SingularityResourceRequest.MEMORY_RESOURCE_NAME)) {
+      if (!memory.isPresent()) {
+        return false;
+      }
+
+      if (memory.get() < findNumberResourceRequest(requestedResources, SingularityResourceRequest.MEMORY_RESOURCE_NAME, Double.MAX_VALUE).doubleValue()) {
+        return false;
+      }
     }
 
     int numPorts = getNumPorts(offerResources);
 
     if (SingularityResourceRequest.hasResource(requestedResources, SingularityResourceRequest.PORT_COUNT_RESOURCE_NAME)
-        && numPorts < SingularityResourceRequest.findNumberResourceRequest(requestedResources, SingularityResourceRequest.PORT_COUNT_RESOURCE_NAME, Integer.MAX_VALUE).intValue()) {
+        && numPorts < findNumberResourceRequest(requestedResources, SingularityResourceRequest.PORT_COUNT_RESOURCE_NAME, Integer.MAX_VALUE).intValue()) {
       return false;
     }
 
@@ -346,15 +357,11 @@ public final class MesosUtils {
     return remaining;
   }
 
-  public static boolean hasAllResources(List<Resource> resources, Collection<String> resourceNames) {
-    Set<String> allResourceNames = new HashSet<String>(resourceNames);
-    for (Resource resource : resources) {
-      allResourceNames.remove(resource.getName());
-      if (allResourceNames.isEmpty()) {
-        return true;
-      }
-    }
-    return false;
+  public static Set<String> hasAllResources(List<Resource> resources, Collection<String> resourceNames) {
+    ImmutableSet<String> allResourceNames = ImmutableSet.copyOf(resourceNames);
+    ImmutableSet<String> presentResourceNames = ImmutableSet.copyOf(Lists.transform(resources, getResourceNameFunction()));
+
+    return ImmutableSet.copyOf(Sets.difference(allResourceNames, presentResourceNames));
   }
 
   public static Predicate<? super Resource> getFilterStandardAttributesFunction() {
@@ -389,7 +396,12 @@ public final class MesosUtils {
       checkNotNull(offer, "offer is null");
 
       List<Resource> resources = offer.getResourcesList();
-      checkState(hasAllResources(resources, STANDARD_RESOURCES), "Resource List from %s is missing one or more standard resources (%s)", offer.getSlaveId().getValue(), STANDARD_RESOURCES);
+
+      Set<String> missing = hasAllResources(resources, STANDARD_RESOURCES);
+
+      if (!missing.isEmpty()) {
+        LOG.warn("Resource List from {} is missing one or more standard resources ({})", offer.getSlaveId().getValue(), missing);
+      }
 
       LOG.debug("Offer from {} ({})", offer.getHostname(), offer.getSlaveId().getValue());
       LOG.debug("Attributes: {}", buildAttributeMap(offer.getAttributesList()));
@@ -448,6 +460,16 @@ public final class MesosUtils {
       @Override
       public String apply(@Nonnull Attribute attribute) {
         return attribute.getName();
+      }
+    };
+  }
+
+  private static Function<? super Resource, String> getResourceNameFunction() {
+    return new Function<Resource, String>() {
+
+      @Override
+      public String apply(@Nonnull Resource resource) {
+        return resource.getName();
       }
     };
   }
