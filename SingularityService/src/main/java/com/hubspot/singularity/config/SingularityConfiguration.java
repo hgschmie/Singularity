@@ -139,6 +139,11 @@ public class SingularityConfiguration extends Configuration {
 
   private long threadpoolShutdownDelayInSeconds = 1;
 
+  private int listenerThreadpoolSize = 3;
+
+  /** If true, the event system waits for all listeners having processed an event. */
+  private boolean waitForListeners = true;
+
   @JsonProperty("zookeeper")
   @Valid
   private ZooKeeperConfiguration zooKeeperConfiguration;
@@ -365,6 +370,14 @@ public class SingularityConfiguration extends Configuration {
 
   public int getCoreThreadpoolSize() {
     return coreThreadpoolSize;
+  }
+
+  public int getListenerThreadpoolSize() {
+    return listenerThreadpoolSize;
+  }
+
+  public boolean isWaitForListeners() {
+    return waitForListeners;
   }
 
   public long getThreadpoolShutdownDelayInSeconds() {
@@ -599,4 +612,11 @@ public class SingularityConfiguration extends Configuration {
     this.threadpoolShutdownDelayInSeconds = threadpoolShutdownDelayInSeconds;
   }
 
+  public void setListenerThreadpoolSize(int listenerThreadpoolSize) {
+    this.listenerThreadpoolSize = listenerThreadpoolSize;
+  }
+
+  public void setWaitForListeners(boolean waitForListeners) {
+    this.waitForListeners = waitForListeners;
+  }
 }
