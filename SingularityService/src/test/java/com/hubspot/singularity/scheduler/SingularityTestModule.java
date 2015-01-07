@@ -50,6 +50,7 @@ import com.hubspot.singularity.data.SingularityDataModule;
 import com.hubspot.singularity.data.history.SingularityHistoryModule;
 import com.hubspot.singularity.data.transcoders.SingularityTranscoderModule;
 import com.hubspot.singularity.data.zkmigrations.SingularityZkMigrationsModule;
+import com.hubspot.singularity.event.SingularityEventModule;
 import com.hubspot.singularity.guice.GuiceBundle;
 import com.hubspot.singularity.hooks.LoadBalancerClient;
 import com.hubspot.singularity.mesos.SchedulerDriverSupplier;
@@ -164,6 +165,7 @@ public class SingularityTestModule implements Module {
     mainBinder.install(new SingularityHistoryModule());
     mainBinder.install(new SingularityZkMigrationsModule());
     mainBinder.install(new SingularityMesosClientModule());
+    mainBinder.install(new SingularityEventModule(configuration));
 
     mainBinder.bind(DeployResource.class);
     mainBinder.bind(RequestResource.class);
