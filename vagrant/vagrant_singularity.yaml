@@ -1,7 +1,7 @@
 # singularity-related config:
 server:
   type: simple
-  applicationContextPath: /singularity
+  applicationContextPath: "/"
   connector:
     type: http
     port: 7099
@@ -24,6 +24,7 @@ mesos:
   frameworkName: Singularity
   frameworkId: Singularity
   frameworkFailoverTimeout: 1000000
+  useNativeCode: false
 
 zookeeper:
   quorum: vagrant-singularity:2181
@@ -42,4 +43,4 @@ sandboxDefaultsToTaskId: false  # enable if using SingularityExecutor
 
 ui:
   title: Singularity (local)
-  baseUrl: http://localhost:7099/singularity
+  baseUrl: http://localhost:7099/
