@@ -22,7 +22,7 @@ function install_singularity_config {
 # singularity-related config:
 server:
   type: simple
-  applicationContextPath: /singularity
+  applicationContextPath: "/"
   connector:
     type: http
     port: 7099
@@ -45,6 +45,7 @@ mesos:
   frameworkName: Singularity
   frameworkId: Singularity
   frameworkFailoverTimeout: 1000000
+  useNativeCode: false
 
 zookeeper:
   quorum: localhost:2181
@@ -60,7 +61,7 @@ logging:
 
 ui:
   title: Singularity (vagrant)
-  baseUrl: http://vagrant-singularity:7099/singularity
+  baseUrl: http://vagrant-singularity:7099/
 
 loadBalancerUri: http://vagrant-singularity:8080/baragon/v2/request
 
@@ -124,4 +125,4 @@ install_singularity
 migrate_db
 start_singularity
 
-echo "The Singularity Web UI is available at http://vagrant-singularity:7099/singularity/"
+echo "The Singularity Web UI is available at http://vagrant-singularity:7099/"
