@@ -416,10 +416,6 @@ public class TaskManager extends CuratorAsyncManager {
     save(getNotifiedOverduePath(taskId), Optional.<byte[]> absent());
   }
 
-  public Optional<SingularityLoadBalancerUpdate> getLoadBalancerState(SingularityTaskId taskId, LoadBalancerRequestType requestType) {
-    return getData(getLoadBalancerStatePath(taskId, requestType), taskLoadBalancerUpdateTranscoder);
-  }
-
   public Optional<SingularityPendingTask> getPendingTask(SingularityPendingTaskId pendingTaskId) {
     return getData(getPendingPath(pendingTaskId), pendingTaskTranscoder);
   }

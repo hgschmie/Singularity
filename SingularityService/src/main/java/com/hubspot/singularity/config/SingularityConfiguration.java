@@ -3,7 +3,6 @@ package com.hubspot.singularity.config;
 import io.dropwizard.Configuration;
 import io.dropwizard.db.DataSourceFactory;
 
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import javax.validation.Valid;
@@ -95,13 +94,6 @@ public class SingularityConfiguration extends Configuration {
 
   private int listenerThreadpoolSize = 3;
 
-  @JsonProperty("loadBalancerQueryParams")
-  private Map<String, String> loadBalancerQueryParams;
-
-  private long loadBalancerRequestTimeoutMillis = 2000;
-
-  private String loadBalancerUri;
-
   private int logFetchMaxThreads = 15;
 
   private int maxDeployIdSize = 50;
@@ -115,6 +107,10 @@ public class SingularityConfiguration extends Configuration {
   @JsonProperty("mesos")
   @Valid
   private MesosConfiguration mesosConfiguration;
+
+  @JsonProperty("baragon")
+  @Valid
+  private BaragonConfiguration baragonConfiguration;
 
   private int newTaskCheckerBaseDelaySeconds = 1;
 
@@ -292,18 +288,6 @@ public class SingularityConfiguration extends Configuration {
     return listenerThreadpoolSize;
   }
 
-  public Optional<Map<String, String>> getLoadBalancerQueryParams() {
-    return Optional.fromNullable(loadBalancerQueryParams);
-  }
-
-  public long getLoadBalancerRequestTimeoutMillis() {
-    return loadBalancerRequestTimeoutMillis;
-  }
-
-  public String getLoadBalancerUri() {
-    return loadBalancerUri;
-  }
-
   public int getLogFetchMaxThreads() {
     return logFetchMaxThreads;
   }
@@ -326,6 +310,10 @@ public class SingularityConfiguration extends Configuration {
 
   public MesosConfiguration getMesosConfiguration() {
     return mesosConfiguration;
+  }
+
+  public Optional<BaragonConfiguration> getBaragonConfiguration() {
+    return Optional.fromNullable(baragonConfiguration);
   }
 
   public int getNewTaskCheckerBaseDelaySeconds() {
@@ -564,18 +552,6 @@ public class SingularityConfiguration extends Configuration {
     this.listenerThreadpoolSize = listenerThreadpoolSize;
   }
 
-  public void setLoadBalancerQueryParams(Map<String, String> loadBalancerQueryParams) {
-    this.loadBalancerQueryParams = loadBalancerQueryParams;
-  }
-
-  public void setLoadBalancerRequestTimeoutMillis(long loadBalancerRequestTimeoutMillis) {
-    this.loadBalancerRequestTimeoutMillis = loadBalancerRequestTimeoutMillis;
-  }
-
-  public void setLoadBalancerUri(String loadBalancerUri) {
-    this.loadBalancerUri = loadBalancerUri;
-  }
-
   public void setLogFetchMaxThreads(int logFetchMaxThreads) {
     this.logFetchMaxThreads = logFetchMaxThreads;
   }
@@ -598,6 +574,10 @@ public class SingularityConfiguration extends Configuration {
 
   public void setMesosConfiguration(MesosConfiguration mesosConfiguration) {
     this.mesosConfiguration = mesosConfiguration;
+  }
+
+  public void setBaragonConfiguration(BaragonConfiguration baragonConfiguration) {
+    this.baragonConfiguration = baragonConfiguration;
   }
 
   public void setNewTaskCheckerBaseDelaySeconds(int newTaskCheckerBaseDelaySeconds) {

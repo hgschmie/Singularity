@@ -41,6 +41,7 @@ import com.hubspot.mesos.client.SingularityMesosClientModule;
 import com.hubspot.singularity.SingularityAbort;
 import com.hubspot.singularity.SingularityMainModule;
 import com.hubspot.singularity.SingularityTaskId;
+import com.hubspot.singularity.config.BaragonConfiguration;
 import com.hubspot.singularity.config.MesosConfiguration;
 import com.hubspot.singularity.config.SMTPConfiguration;
 import com.hubspot.singularity.config.SentryConfiguration;
@@ -180,7 +181,9 @@ public class SingularityTestModule implements Module {
 
   private static SingularityConfiguration getSingularityConfigurationForTestingServer(final TestingServer ts) {
     SingularityConfiguration config = new SingularityConfiguration();
-    config.setLoadBalancerUri("test");
+    BaragonConfiguration baragonConfiguration = new BaragonConfiguration();
+    baragonConfiguration.setLoadBalancerUri("test");
+    config.setBaragonConfiguration(baragonConfiguration);
 
     MesosConfiguration mc = new MesosConfiguration();
     mc.setDefaultCpus(1);
