@@ -1,5 +1,7 @@
 package com.hubspot.singularity;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
@@ -17,10 +19,10 @@ public class SingularityDeployUpdate {
 
   @JsonCreator
   public SingularityDeployUpdate(@JsonProperty("deployMarker") SingularityDeployMarker deployMarker, @JsonProperty("deploy") Optional<SingularityDeploy> deploy, @JsonProperty("eventType") DeployEventType eventType, @JsonProperty("deployResult") Optional<SingularityDeployResult> deployResult) {
-    this.deployMarker = deployMarker;
-    this.deploy = deploy;
-    this.eventType = eventType;
-    this.deployResult = deployResult;
+    this.deployMarker = checkNotNull(deployMarker, "deployMarker is null");
+    this.deploy = checkNotNull(deploy, "deploy is null");
+    this.eventType = checkNotNull(eventType, "eventType is null");
+    this.deployResult = checkNotNull(deployResult, "deployResult is null");
   }
 
   public SingularityDeployMarker getDeployMarker() {

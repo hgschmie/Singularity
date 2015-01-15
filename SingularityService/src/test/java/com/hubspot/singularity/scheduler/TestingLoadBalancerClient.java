@@ -29,6 +29,11 @@ public class TestingLoadBalancerClient implements LoadBalancerClient {
   }
 
   @Override
+  public boolean isActive() {
+    return true;
+  }
+
+  @Override
   public SingularityLoadBalancerUpdate enqueue(LoadBalancerRequestId loadBalancerRequestId, SingularityRequest request, SingularityDeploy deploy, List<SingularityTask> add, List<SingularityTask> remove) {
     return getReturnValue(loadBalancerRequestId, LoadBalancerMethod.ENQUEUE);
   }
