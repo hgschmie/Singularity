@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.singularity.SingularityDeployUpdate;
+import com.hubspot.singularity.SingularityLoadBalancerUpdate;
 import com.hubspot.singularity.SingularityRequestHistory;
 import com.hubspot.singularity.SingularityTaskHistoryUpdate;
 import com.hubspot.singularity.config.SingularityConfiguration;
@@ -91,6 +92,24 @@ public class SingularityEventController implements SingularityEventListener {
 
     processFutures(builder.build());
   }
+
+  @Override
+  public void loadBalancerEvent(final SingularityLoadBalancerUpdate loadBalancerUpdate) {
+    ImmutableSet.Builder<ListenableFuture<Void>> builder = ImmutableSet.builder();
+
+    for (final SingularityEventListener eventListener : eventListeners) {
+      builder.add(listenerExecutorService.submit(new Callable<Void>() {
+        @Override
+        public Void call() {
+          eventListener.loadBalancerEvent(loadBalancerUpdate);
+          return null;
+        }
+      }));
+    }
+
+    processFutures(builder.build());
+  }
+
 
   private void processFutures(Iterable<? extends ListenableFuture<?>> futures)
   {

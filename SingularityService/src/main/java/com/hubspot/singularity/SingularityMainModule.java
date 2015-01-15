@@ -1,5 +1,6 @@
 package com.hubspot.singularity;
 
+import static com.hubspot.singularity.data.transcoders.SingularityJsonTranscoderBinder.bindTranscoder;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.inject.name.Names.named;
 import de.neuland.jade4j.parser.Parser;
@@ -38,6 +39,8 @@ import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import com.hubspot.baragon.models.BaragonRequest;
+import com.hubspot.baragon.models.BaragonResponse;
 import com.hubspot.mesos.JavaUtils;
 import com.hubspot.mesos.client.MesosClient;
 import com.hubspot.singularity.config.MesosConfiguration;
@@ -48,7 +51,7 @@ import com.hubspot.singularity.config.SingularityConfiguration;
 import com.hubspot.singularity.config.ZooKeeperConfiguration;
 import com.hubspot.singularity.guice.DropwizardObjectMapperProvider;
 import com.hubspot.singularity.hooks.LoadBalancerClient;
-import com.hubspot.singularity.hooks.LoadBalancerClientImpl;
+import com.hubspot.singularity.hooks.BaragonLoadBalancerClientImpl;
 import com.hubspot.singularity.hooks.SingularityWebhookPoller;
 import com.hubspot.singularity.hooks.SingularityWebhookSender;
 import com.hubspot.singularity.sentry.NotifyingExceptionMapper;
@@ -112,10 +115,13 @@ public class SingularityMainModule implements Module {
     binder.bind(SingularityMailer.class).in(Scopes.SINGLETON);
     binder.bind(SingularitySmtpSender.class).in(Scopes.SINGLETON);
     binder.bind(SingularityExceptionNotifier.class).in(Scopes.SINGLETON);
-    binder.bind(LoadBalancerClient.class).to(LoadBalancerClientImpl.class).in(Scopes.SINGLETON);
     binder.bind(SingularityMailRecordCleaner.class).in(Scopes.SINGLETON);
-
     binder.bind(SingularityWebhookPoller.class).in(Scopes.SINGLETON);
+
+    binder.bind(LoadBalancerClient.class).to(BaragonLoadBalancerClientImpl.class).in(Scopes.SINGLETON);
+    bindTranscoder(binder).asJson(BaragonRequest.class);
+    bindTranscoder(binder).asJson(BaragonResponse.class);
+
 
     binder.bind(MesosClient.class).in(Scopes.SINGLETON);
 
