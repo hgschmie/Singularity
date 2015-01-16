@@ -42,7 +42,7 @@ public class TestResource {
   @Path("/scheduler/statusUpdate/{taskId}/{taskState}")
   @ApiOperation("Force an update for a specific task.")
   public void statusUpdate(@PathParam("taskId") String taskId, @PathParam("taskState") String taskState) {
-    checkForbidden(configuration.allowTestResourceCalls(), "Test resource calls are disabled (set allowTestResourceCalls to true in configuration)");
+    checkForbidden(configuration.isAllowTestResourceCalls(), "Test resource calls are disabled (set allowTestResourceCalls to true in configuration)");
 
     driver.getScheduler().statusUpdate(null, TaskStatus.newBuilder()
         .setTaskId(TaskID.newBuilder().setValue(taskId))
@@ -54,7 +54,7 @@ public class TestResource {
   @Path("/leader")
   @ApiOperation("Make this instance of Singularity believe it's elected leader.")
   public void setLeader() {
-    checkForbidden(configuration.allowTestResourceCalls(), "Test resource calls are disabled (set allowTestResourceCalls to true in configuration)");
+    checkForbidden(configuration.isAllowTestResourceCalls(), "Test resource calls are disabled (set allowTestResourceCalls to true in configuration)");
 
     managed.isLeader();
   }
@@ -63,7 +63,7 @@ public class TestResource {
   @Path("/notleader")
   @ApiOperation("Make this instanceo of Singularity believe it's lost leadership.")
   public void setNotLeader() {
-    checkForbidden(configuration.allowTestResourceCalls(), "Test resource calls are disabled (set allowTestResourceCalls to true in configuration)");
+    checkForbidden(configuration.isAllowTestResourceCalls(), "Test resource calls are disabled (set allowTestResourceCalls to true in configuration)");
 
     managed.notLeader();
   }
@@ -72,7 +72,7 @@ public class TestResource {
   @Path("/stop")
   @ApiOperation("Stop the Mesos scheduler driver.")
   public void stop() throws Exception {
-    checkForbidden(configuration.allowTestResourceCalls(), "Test resource calls are disabled (set allowTestResourceCalls to true in configuration)");
+    checkForbidden(configuration.isAllowTestResourceCalls(), "Test resource calls are disabled (set allowTestResourceCalls to true in configuration)");
 
     managed.stop();
   }
@@ -81,7 +81,7 @@ public class TestResource {
   @Path("/abort")
   @ApiOperation("Abort the Mesos scheduler driver.")
   public void abort() {
-    checkForbidden(configuration.allowTestResourceCalls(), "Test resource calls are disabled (set allowTestResourceCalls to true in configuration)");
+    checkForbidden(configuration.isAllowTestResourceCalls(), "Test resource calls are disabled (set allowTestResourceCalls to true in configuration)");
 
     abort.abort(AbortReason.TEST_ABORT);
   }
@@ -90,7 +90,7 @@ public class TestResource {
   @Path("/start")
   @ApiOperation("Start the Mesos scheduler driver.")
   public void start() throws Exception {
-    checkForbidden(configuration.allowTestResourceCalls(), "Test resource calls are disabled (set allowTestResourceCalls to true in configuration)");
+    checkForbidden(configuration.isAllowTestResourceCalls(), "Test resource calls are disabled (set allowTestResourceCalls to true in configuration)");
 
     managed.start();
   }
