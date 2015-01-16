@@ -6,9 +6,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
-import com.wordnik.swagger.annotations.Api;
-import com.wordnik.swagger.annotations.ApiOperation;
-
 import org.apache.mesos.Protos.TaskID;
 import org.apache.mesos.Protos.TaskState;
 import org.apache.mesos.Protos.TaskStatus;
@@ -22,6 +19,8 @@ import com.hubspot.singularity.SingularityLeaderController;
 import com.hubspot.singularity.SingularityService;
 import com.hubspot.singularity.config.SingularityConfiguration;
 import com.hubspot.singularity.mesos.SingularityDriver;
+import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiOperation;
 
 @Path(TestResource.PATH)
 @Api(description="Misc testing endpoints.", value=TestResource.PATH)
