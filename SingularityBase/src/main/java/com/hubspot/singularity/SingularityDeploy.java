@@ -88,6 +88,7 @@ public class SingularityDeploy {
       @JsonProperty("loadBalancerOptions") Optional<Map<String, Object>> loadBalancerOptions,
       @JsonProperty("skipHealthchecksOnDeploy") Optional<Boolean> skipHealthchecksOnDeploy) {
     this.requestId = requestId;
+    this.id = id;
 
     this.command = command;
     this.arguments = arguments;
@@ -101,14 +102,6 @@ public class SingularityDeploy {
     this.customExecutorId = customExecutorId;
     this.customExecutorSource = customExecutorSource;
 
-    this.metadata = metadata;
-    this.version = version;
-    this.id = id;
-    this.timestamp = timestamp;
-    this.env = env;
-    this.uris = uris;
-    this.executorData = executorData;
-
     this.healthcheckUri = healthcheckUri;
     this.healthcheckIntervalSeconds = healthcheckIntervalSeconds;
     this.healthcheckTimeoutSeconds = healthcheckTimeoutSeconds;
@@ -121,7 +114,14 @@ public class SingularityDeploy {
     this.serviceBasePath = serviceBasePath;
     this.loadBalancerGroups = loadBalancerGroups;
     this.loadBalancerOptions = loadBalancerOptions;
-  }
+
+    this.metadata = metadata;
+    this.version = version;
+    this.timestamp = timestamp;
+    this.env = env;
+    this.uris = uris;
+    this.executorData = executorData;
+}
 
   public SingularityDeployBuilder toBuilder() {
     return new SingularityDeployBuilder(requestId, id)
