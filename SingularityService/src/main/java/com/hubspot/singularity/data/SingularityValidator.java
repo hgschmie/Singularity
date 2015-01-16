@@ -176,7 +176,7 @@ public class SingularityValidator {
       deployId = deploy.getId();
     }
 
-    checkBadRequest(!deployId.contains("/") && !deployId.contains("-"), "Id must not be null and can not contain / or - characters");
+    checkBadRequest(!deployId.contains("/") && !deployId.contains("-"), "Id must not contain / or - characters");
     checkBadRequest(deployId.length() < maxDeployIdSize, "Deploy id must be less than %s characters, it is %s (%s)", maxDeployIdSize, deployId.length(), deployId);
     checkBadRequest(deploy.getRequestId() != null && deploy.getRequestId().equals(request.getId()), "Deploy id must match request id");
 

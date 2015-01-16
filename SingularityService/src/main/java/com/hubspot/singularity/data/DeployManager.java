@@ -1,13 +1,13 @@
 package com.hubspot.singularity.data;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.utils.ZKPaths;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
@@ -35,8 +35,6 @@ import com.hubspot.singularity.event.SingularityEventListener;
 
 @Singleton
 public class DeployManager extends CuratorAsyncManager {
-
-  private static final Logger LOG = LoggerFactory.getLogger(DeployManager.class);
 
   private final SingularityEventListener singularityEventListener;
   private final Transcoder<SingularityDeploy> deployTranscoder;
@@ -125,36 +123,44 @@ public class DeployManager extends CuratorAsyncManager {
     return getAsyncChildren(PENDING_ROOT, pendingDeployTranscoder);
   }
 
-  private String getRequestDeployPath(String requestId) {
+  private static String getRequestDeployPath(String requestId) {
     return ZKPaths.makePath(BY_REQUEST_ROOT, requestId);
   }
 
-  private String getDeployStatisticsPath(String requestId, String deployId) {
+  private static String getDeployStatisticsPath(String requestId, String deployId) {
     return ZKPaths.makePath(getDeployParentPath(requestId, deployId), DEPLOY_STATISTICS_KEY);
   }
 
-  private String getDeployResultPath(String requestId, String deployId) {
+  private static String getDeployResultPath(String requestId, String deployId) {
     return ZKPaths.makePath(getDeployParentPath(requestId, deployId), DEPLOY_RESULT_KEY);
   }
 
-  private String getDeployIdPath(String requestId) {
+  private static String getDeployIdPath(String requestId) {
     return ZKPaths.makePath(getRequestDeployPath(requestId), DEPLOY_LIST_KEY);
   }
 
-  private String getDeployParentPath(String requestId, String deployId) {
+  private static String getDeployParentPath(String requestId, String deployId) {
     return ZKPaths.makePath(getDeployIdPath(requestId), new SingularityDeployKey(requestId, deployId).getId());
   }
 
-  private String getDeployDataPath(String requestId, String deployId) {
+  private static String getDeployDataPath(String requestId, String deployId) {
     return ZKPaths.makePath(getDeployParentPath(requestId, deployId), DEPLOY_DATA_KEY);
   }
 
-  private String getDeployMarkerPath(String requestId, String deployId) {
+  private static String getDeployMarkerPath(String requestId, String deployId) {
     return ZKPaths.makePath(getDeployParentPath(requestId, deployId), DEPLOY_MARKER_KEY);
   }
 
-  private String getRequestDeployStatePath(String requestId) {
+  private static String getRequestDeployStatePath(String requestId) {
     return ZKPaths.makePath(getRequestDeployPath(requestId), REQUEST_DEPLOY_STATE_KEY);
+  }
+
+  private static String getPendingDeployPath(String requestId) {
+    return ZKPaths.makePath(PENDING_ROOT, requestId);
+  }
+
+  private static String getCancelDeployPath(SingularityDeployMarker deployMarker) {
+    return ZKPaths.makePath(CANCEL_ROOT, String.format("%s-%s", deployMarker.getRequestId(), deployMarker.getDeployId()));
   }
 
   public Map<SingularityDeployKey, SingularityDeploy> getDeploysForKeys(Collection<SingularityDeployKey> deployKeys) {
@@ -179,25 +185,26 @@ public class DeployManager extends CuratorAsyncManager {
   public SingularityCreateResult saveDeploy(SingularityRequest request, SingularityDeployMarker deployMarker, SingularityDeploy deploy) {
     final SingularityCreateResult deploySaveResult = create(getDeployDataPath(deploy.getRequestId(), deploy.getId()), deploy, deployTranscoder);
 
-    if (deploySaveResult == SingularityCreateResult.EXISTED) {
-      LOG.info(String.format("Deploy object for %s already existed (new marker: %s)", deploy, deployMarker));
-    }
+    checkState(deploySaveResult == SingularityCreateResult.CREATED, "Could not create deploy object for %s: %s (new marker: %s)", deploy, deploySaveResult, deployMarker);
 
     singularityEventListener.deployHistoryEvent(new SingularityDeployUpdate(deployMarker, Optional.of(deploy), DeployEventType.STARTING, Optional.<SingularityDeployResult>absent()));
 
-    create(getDeployMarkerPath(deploy.getRequestId(), deploy.getId()), deployMarker, deployMarkerTranscoder);
+    final SingularityCreateResult deployMarkerResult = create(getDeployMarkerPath(deploy.getRequestId(), deploy.getId()), deployMarker, deployMarkerTranscoder);
+    checkState(deployMarkerResult == SingularityCreateResult.CREATED, "Could not create marker object for %s: %s", deployMarker, deployMarkerResult);
 
     final Optional<SingularityRequestDeployState> currentState = getRequestDeployState(deploy.getRequestId());
 
     Optional<SingularityDeployMarker> activeDeploy = Optional.absent();
     Optional<SingularityDeployMarker> pendingDeploy = Optional.absent();
 
+    // Any deployable request makes the deploy marker the new pending request. If an active deploy exists, pull that out, too.
     if (request.isDeployable()) {
+      pendingDeploy = Optional.of(deployMarker);
       if (currentState.isPresent()) {
         activeDeploy = currentState.get().getActiveDeploy();
       }
-      pendingDeploy = Optional.of(deployMarker);
     } else {
+      // Request is not deployable (it is one-shot or cron). Make the deploy marker the actual active deploy.
       activeDeploy = Optional.of(deployMarker);
     }
 
@@ -260,14 +267,6 @@ public class DeployManager extends CuratorAsyncManager {
 
   public SingularityCreateResult saveDeployStatistics(SingularityDeployStatistics newDeployStatistics) {
     return save(getDeployStatisticsPath(newDeployStatistics.getRequestId(), newDeployStatistics.getDeployId()), newDeployStatistics, deployStatisticsTranscoder);
-  }
-
-  private String getPendingDeployPath(String requestId) {
-    return ZKPaths.makePath(PENDING_ROOT, requestId);
-  }
-
-  private String getCancelDeployPath(SingularityDeployMarker deployMarker) {
-    return ZKPaths.makePath(CANCEL_ROOT, String.format("%s-%s", deployMarker.getRequestId(), deployMarker.getDeployId()));
   }
 
   public SingularityCreateResult createCancelDeployRequest(SingularityDeployMarker deployMarker) {

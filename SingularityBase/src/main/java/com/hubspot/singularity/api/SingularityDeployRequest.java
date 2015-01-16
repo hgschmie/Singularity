@@ -27,8 +27,8 @@ public class SingularityDeployRequest {
   }
 
   @ApiModelProperty(required = false, value = "If deploy is successful, also unpause the request.")
-  public Optional<Boolean> getUnpauseOnSuccessfulDeploy() {
-    return unpauseOnSuccessfulDeploy;
+  public boolean isUnpauseOnSuccessfulDeploy() {
+    return unpauseOnSuccessfulDeploy.or(Boolean.FALSE).booleanValue();
   }
 
   @ApiModelProperty(required = true, value = "The Singularity deploy object")
@@ -39,9 +39,5 @@ public class SingularityDeployRequest {
   @Override
   public String toString() {
     return "SingularityDeployRequest [user=" + user + ", unpauseOnSuccessfulDeploy=" + unpauseOnSuccessfulDeploy + ", deploy=" + deploy + "]";
-  }
-
-  public boolean isUnpauseOnSuccessfulDeploy() {
-    return unpauseOnSuccessfulDeploy.or(false);
   }
 }
