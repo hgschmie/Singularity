@@ -25,11 +25,13 @@ public class UIConfiguration {
   private boolean hideNewRequestButton = false;
 
   /**
-   * If true, the root of the server (http://.../singularity/) will open the UI. Otherwise,
-   * the UI URI (http://.../singularity/ui/) must be used.
+   * How to handle the root URL:
+   * REDIRECT_TO_UI  -- Redirect / to /ui/
+   * INDEX_CATCHALL  -- Serve the index HTML (same as /ui/ endpoint) for any URL not handled by another Resource class
+   * DISABLED        -- Don't bind to / or /.*
    */
   @JsonProperty
-  private boolean redirectRootToUi = true;
+  private ROOT_URL_MODE rootUrlMode = ROOT_URL_MODE.REDIRECT_TO_UI;
 
   public boolean isHideNewDeployButton() {
     return hideNewDeployButton;
@@ -71,11 +73,17 @@ public class UIConfiguration {
     this.navColor = navColor;
   }
 
-  public boolean isRedirectRootToUi() {
-    return redirectRootToUi;
+  public ROOT_URL_MODE getRootUrlMode() {
+    return rootUrlMode;
   }
 
-  public void setRedirectRootToUi(boolean redirectRootToUi) {
-    this.redirectRootToUi = redirectRootToUi;
+  public void setRootUrlMode(ROOT_URL_MODE rootUrlMode) {
+    this.rootUrlMode = rootUrlMode;
+  }
+
+  public static enum ROOT_URL_MODE {
+    REDIRECT_TO_UI,
+    INDEX_CATCHALL,
+    DISABLED
   }
 }

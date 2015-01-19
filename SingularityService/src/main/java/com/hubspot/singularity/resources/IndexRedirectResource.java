@@ -18,17 +18,17 @@ import com.google.inject.name.Named;
 
 @Path("/")
 @Produces(MediaType.TEXT_HTML)
-public class IndexResource {
+public class IndexRedirectResource {
   private final String singularityUriBase;
 
   @Inject
-  public IndexResource(@Named(SINGULARITY_URI_BASE) String singularityUriBase) {
+  public IndexRedirectResource(@Named(SINGULARITY_URI_BASE) String singularityUriBase) {
     this.singularityUriBase = singularityUriBase;
   }
 
   @GET
   @Path("/")
   public Response getIndex(@Context UriInfo info) {
-    return Response.status(Status.MOVED_PERMANENTLY).location(UriBuilder.fromPath(singularityUriBase).path(UI_RESOURCE_LOCATION).build()).build();
+    return Response.status(Status.SEE_OTHER).location(UriBuilder.fromPath(singularityUriBase).path(UI_RESOURCE_LOCATION).build()).build();
   }
 }

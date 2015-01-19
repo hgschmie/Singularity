@@ -1,5 +1,8 @@
 package com.hubspot.singularity.resources;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.inject.AbstractModule;
@@ -8,6 +11,7 @@ import com.hubspot.singularity.config.UIConfiguration;
 import com.hubspot.singularity.guice.GuicePropertyFilteringMessageBodyWriter;
 
 public class SingularityResourceModule extends AbstractModule {
+  private static final Logger LOG = LoggerFactory.getLogger(SingularityResourceModule.class);
 
   private final UIConfiguration uiConfiguration;
 
@@ -34,8 +38,12 @@ public class SingularityResourceModule extends AbstractModule {
     bind(WebhookResource.class);
     bind(UiResource.class);
 
-    if (uiConfiguration.isRedirectRootToUi()) {
-      bind(IndexResource.class);
+    if (uiConfiguration.getRootUrlMode() == UIConfiguration.ROOT_URL_MODE.REDIRECT_TO_UI) {
+      bind(IndexRedirectResource.class);
+    } else if (uiConfiguration.getRootUrlMode() == UIConfiguration.ROOT_URL_MODE.INDEX_CATCHALL) {
+      bind(StaticCatchallResource.class);
+    } else {
+      LOG.info("Not binding any Resources to / or /.*");
     }
   }
 }
