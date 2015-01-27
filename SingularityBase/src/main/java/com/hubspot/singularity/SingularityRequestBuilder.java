@@ -30,8 +30,6 @@ public class SingularityRequestBuilder {
   private Optional<List<String>> rackAffinity;
   private Optional<SlavePlacement> slavePlacement;
 
-  private Optional<Boolean> loadBalanced;
-
   public SingularityRequestBuilder(String id, RequestType requestType) {
     this.id = id;
     this.requestType = requestType;
@@ -42,7 +40,6 @@ public class SingularityRequestBuilder {
     this.killOldNonLongRunningTasksAfterMillis = Optional.absent();
     this.instances = Optional.absent();
     this.rackSensitive = Optional.absent();
-    this.loadBalanced = Optional.absent();
     this.quartzSchedule = Optional.absent();
     this.rackAffinity = Optional.absent();
     this.slavePlacement = Optional.absent();
@@ -51,17 +48,8 @@ public class SingularityRequestBuilder {
   }
 
   public SingularityRequest build() {
-    return new SingularityRequest(id, requestType, owners, numRetriesOnFailure, schedule, daemon, instances, rackSensitive, loadBalanced, killOldNonLongRunningTasksAfterMillis, scheduleType, quartzSchedule,
+    return new SingularityRequest(id, requestType, owners, numRetriesOnFailure, schedule, daemon, instances, rackSensitive, killOldNonLongRunningTasksAfterMillis, scheduleType, quartzSchedule,
         rackAffinity, slavePlacement, scheduledExpectedRuntimeMillis);
-  }
-
-  public Optional<Boolean> getLoadBalanced() {
-    return loadBalanced;
-  }
-
-  public SingularityRequestBuilder setLoadBalanced(Optional<Boolean> loadBalanced) {
-    this.loadBalanced = loadBalanced;
-    return this;
   }
 
   public String getId() {
@@ -187,7 +175,7 @@ public class SingularityRequestBuilder {
     return "SingularityRequestBuilder [id=" + id + ", requestType=" + requestType + ", owners=" + owners + ", numRetriesOnFailure=" + numRetriesOnFailure + ", schedule=" + schedule
         + ", quartzSchedule=" + quartzSchedule + ", scheduleType=" + scheduleType + ", killOldNonLongRunningTasksAfterMillis=" + killOldNonLongRunningTasksAfterMillis
         + ", scheduledExpectedRuntimeMillis=" + scheduledExpectedRuntimeMillis + ", daemon=" + daemon + ", instances=" + instances + ", rackSensitive=" + rackSensitive + ", rackAffinity="
-        + rackAffinity + ", slavePlacement=" + slavePlacement + ", loadBalanced=" + loadBalanced + "]";
+        + rackAffinity + ", slavePlacement=" + slavePlacement + "]";
   }
 
 }

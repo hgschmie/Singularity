@@ -47,14 +47,13 @@ public class SingularityTaskHistoryPersister extends SingularityHistoryPersister
     final List<SingularityTaskId> allTaskIds = taskManager.getAllTaskIds();
 
     final Set<SingularityTaskId> activeTaskIds = Sets.newHashSet(taskManager.getActiveTaskIds());
-    final Set<SingularityTaskId> lbCleaningTaskIds = Sets.newHashSet(taskManager.getLBCleanupTasks());
     final List<SingularityPendingDeploy> pendingDeploys = deployManager.getPendingDeploys();
 
     int numTotal = 0;
     int numTransferred = 0;
 
     for (SingularityTaskId taskId : allTaskIds) {
-      if (activeTaskIds.contains(taskId) || lbCleaningTaskIds.contains(taskId) || isPartofPendingDeploy(pendingDeploys, taskId)) {
+      if (activeTaskIds.contains(taskId) || isPartofPendingDeploy(pendingDeploys, taskId)) {
         continue;
       }
       if (moveToHistoryOrCheckForPurge(taskId)) {

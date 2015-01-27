@@ -148,13 +148,6 @@
             </div>
         </div>
 
-        {{#if model.request.loadBalanced}}
-            <div class="form-group required">
-                <label for="service-base-path">Service base path</label>
-                <input type="text" id="service-base-path" class="form-control" placeholder="eg: /singularity/api/v2">
-            </div>
-        {{/if}}
-
         <fieldset>
             <h4>Resources</h4>
 
@@ -229,22 +222,6 @@
                 </div>
             </fieldset>
 
-            <fieldset>
-                <h4>Load balancer</h4>
-
-                <div class="form-group {{#if model.request.loadBalanced}}required{{/if}}">
-                    <label>Load balancer groups</label>
-                    <div class="multi-input">
-                        <input type="text" class="form-control lb-group">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Load balancer options</label>
-                    <div class="multi-input">
-                        <input type="text" class="form-control lb-option" placeholder="format: key=value">
-                    </div>
-                </div>
-            </fieldset>
         {{/if}}
 
         <div id="button-row">

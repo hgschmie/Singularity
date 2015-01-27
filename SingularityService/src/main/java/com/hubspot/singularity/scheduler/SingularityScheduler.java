@@ -471,8 +471,6 @@ public class SingularityScheduler {
       stateCache.getActiveTaskIds().remove(taskId);
     }
 
-    taskManager.createLBCleanupTask(taskId);
-
     final Optional<PendingType> scheduleResult = handleCompletedTaskWithStatistics(task, taskId, timestamp, state, deployStatistics, taskHistoryUpdateCreateResult, stateCache);
 
     if (taskHistoryUpdateCreateResult == SingularityCreateResult.EXISTED) {

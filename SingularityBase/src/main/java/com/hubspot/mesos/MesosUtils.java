@@ -464,6 +464,7 @@ public final class MesosUtils {
     return builder.build();
   }
 
+  @SuppressWarnings("unused")
   private static Function<? super Attribute, String> getAttributeNameFunction() {
     return new Function<Attribute, String>() {
 

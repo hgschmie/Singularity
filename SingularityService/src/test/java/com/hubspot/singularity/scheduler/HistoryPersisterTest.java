@@ -77,14 +77,16 @@ public class HistoryPersisterTest extends SingularitySchedulerTestBase {
 
     taskHistoryPersister.runActionOnPoll();
 
-    Assert.assertTrue(taskManager.getTaskHistory(taskOne.getTaskId()).isPresent());
+    // In original Singularity, the task switches here to LB cleanup. As no more LB
+    // states exist, this gets purged directly.
+    Assert.assertFalse(taskManager.getTaskHistory(taskOne.getTaskId()).isPresent());
     Assert.assertTrue(taskManager.getTaskHistory(taskTwo.getTaskId()).isPresent());
 
     cleaner.drainCleanupQueue();
 
     taskHistoryPersister.runActionOnPoll();
 
-    Assert.assertTrue(!taskManager.getTaskHistory(taskOne.getTaskId()).isPresent());
+    Assert.assertFalse(taskManager.getTaskHistory(taskOne.getTaskId()).isPresent());
     Assert.assertTrue(taskManager.getTaskHistory(taskTwo.getTaskId()).isPresent());
   }
 

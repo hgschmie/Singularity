@@ -17,9 +17,7 @@ import org.mockito.Mockito;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
-import com.hubspot.baragon.models.BaragonRequestState;
 import com.hubspot.singularity.DeployState;
-import com.hubspot.singularity.LoadBalancerRequestType;
 import com.hubspot.singularity.MachineState;
 import com.hubspot.singularity.RequestState;
 import com.hubspot.singularity.RequestType;
@@ -27,7 +25,6 @@ import com.hubspot.singularity.SingularityDeploy;
 import com.hubspot.singularity.SingularityDeployBuilder;
 import com.hubspot.singularity.SingularityDeployStatistics;
 import com.hubspot.singularity.SingularityKilledTaskIdRecord;
-import com.hubspot.singularity.SingularityLoadBalancerUpdate;
 import com.hubspot.singularity.SingularityPendingRequest;
 import com.hubspot.singularity.SingularityPendingRequest.PendingType;
 import com.hubspot.singularity.SingularityPendingTask;
@@ -87,37 +84,6 @@ public class SingularitySchedulerTest extends SingularitySchedulerTestBase {
     }
 
     Assert.assertTrue(found);
-  }
-
-  @Test
-  public void testDeployManagerHandlesFailedLBTask() throws Exception {
-    initLoadBalancedRequest();
-    initFirstDeploy();
-
-    SingularityTask firstTask = startTask(firstDeploy);
-
-    initSecondDeploy();
-
-    SingularityTask secondTask = startTask(secondDeploy);
-
-    // this should cause an LB call to happen:
-    deployChecker.checkDeploys();
-
-    Assert.assertTrue(taskManager.getLoadBalancerState(secondTask.getTaskId(), LoadBalancerRequestType.ADD).isPresent());
-    Assert.assertTrue(!taskManager.getLoadBalancerState(secondTask.getTaskId(), LoadBalancerRequestType.DEPLOY).isPresent());
-    Assert.assertTrue(!taskManager.getLoadBalancerState(secondTask.getTaskId(), LoadBalancerRequestType.REMOVE).isPresent());
-
-    statusUpdate(secondTask, TaskState.TASK_FAILED);
-    statusUpdate(firstTask, TaskState.TASK_FAILED);
-
-    deployChecker.checkDeploys();
-
-    Assert.assertTrue(deployManager.getDeployResult(requestId, secondDeployId).get().getDeployState() == DeployState.FAILED);
-
-    List<SingularityPendingTask> pendingTasks = taskManager.getPendingTasks();
-
-    Assert.assertTrue(pendingTasks.size() == 1);
-    Assert.assertTrue(pendingTasks.get(0).getPendingTaskId().getDeployId().equals(firstDeployId));
   }
 
   @Test
@@ -614,51 +580,6 @@ public class SingularitySchedulerTest extends SingularitySchedulerTestBase {
     Assert.assertTrue(taskManager.getActiveTaskIds().size() == 3);
   }
 
-
-  @Test
-  public void testLBCleanup() throws Exception {
-    initLoadBalancedRequest();
-    initFirstDeploy();
-
-    SingularityTask task = launchTask(request, firstDeploy, 1, TaskState.TASK_RUNNING);
-
-    saveLoadBalancerState(BaragonRequestState.SUCCESS, task.getTaskId(), LoadBalancerRequestType.ADD);
-
-    statusUpdate(task, TaskState.TASK_FAILED);
-
-    Assert.assertTrue(!taskManager.getLBCleanupTasks().isEmpty());
-
-    testingLbClient.setNextBaragonRequestState(BaragonRequestState.WAITING);
-
-    cleaner.drainCleanupQueue();
-    Assert.assertTrue(!taskManager.getLBCleanupTasks().isEmpty());
-
-    Optional<SingularityLoadBalancerUpdate> lbUpdate = taskManager.getLoadBalancerState(task.getTaskId(), LoadBalancerRequestType.REMOVE);
-
-    Assert.assertTrue(lbUpdate.isPresent());
-    Assert.assertTrue(lbUpdate.get().getLoadBalancerState() == BaragonRequestState.WAITING);
-
-    testingLbClient.setNextBaragonRequestState(BaragonRequestState.FAILED);
-
-    cleaner.drainCleanupQueue();
-    Assert.assertTrue(!taskManager.getLBCleanupTasks().isEmpty());
-
-    lbUpdate = taskManager.getLoadBalancerState(task.getTaskId(), LoadBalancerRequestType.REMOVE);
-
-    Assert.assertTrue(lbUpdate.isPresent());
-    Assert.assertTrue(lbUpdate.get().getLoadBalancerState() == BaragonRequestState.FAILED);
-
-    testingLbClient.setNextBaragonRequestState(BaragonRequestState.SUCCESS);
-
-    cleaner.drainCleanupQueue();
-    Assert.assertTrue(taskManager.getLBCleanupTasks().isEmpty());
-    lbUpdate = taskManager.getLoadBalancerState(task.getTaskId(), LoadBalancerRequestType.REMOVE);
-
-    Assert.assertTrue(lbUpdate.isPresent());
-    Assert.assertTrue(lbUpdate.get().getLoadBalancerState() == BaragonRequestState.SUCCESS);
-    Assert.assertTrue(lbUpdate.get().getLoadBalancerRequestId().getAttemptNumber() == 2);
-
-  }
 
   @Test
   public void testUnpauseoOnDeploy() throws Exception {

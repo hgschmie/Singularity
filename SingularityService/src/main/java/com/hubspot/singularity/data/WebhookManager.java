@@ -13,7 +13,6 @@ import com.hubspot.singularity.SingularityCreateResult;
 import com.hubspot.singularity.SingularityDeleteResult;
 import com.hubspot.singularity.SingularityDeployKey;
 import com.hubspot.singularity.SingularityDeployUpdate;
-import com.hubspot.singularity.SingularityLoadBalancerUpdate;
 import com.hubspot.singularity.SingularityRequestHistory;
 import com.hubspot.singularity.SingularityTaskHistoryUpdate;
 import com.hubspot.singularity.SingularityWebhook;
@@ -160,9 +159,5 @@ public class WebhookManager extends CuratorAsyncManager implements SingularityEv
 
       save(enqueuePath, deployUpdate, deployWebhookTranscoder);
     }
-  }
-
-  @Override
-  public void loadBalancerEvent(final SingularityLoadBalancerUpdate loadBalancerUpdate) {
   }
 }

@@ -69,7 +69,8 @@ public class SingularityValidator {
 
   private void checkForIllegalChanges(SingularityRequest request, SingularityRequest existingRequest) {
     checkBadRequest(request.getRequestType() == existingRequest.getRequestType(), String.format("Request can not change requestType from %s to %s", existingRequest.getRequestType(), request.getRequestType()));
-    checkBadRequest(request.isLoadBalanced() == existingRequest.isLoadBalanced(), "Request can not change whether it is load balanced");
+    checkBadRequest(request.isScheduled() == existingRequest.isScheduled(), "Request can not change whether it is a scheduled request");
+    checkBadRequest(request.isDaemon() == existingRequest.isDaemon(), "Request can not change whether it is a daemon");
   }
 
   private void checkForIllegalResources(SingularityRequest request, SingularityDeploy deploy) {
@@ -146,7 +147,6 @@ public class SingularityValidator {
     }
 
     if (!request.isLongRunning()) {
-      checkBadRequest(!request.isLoadBalanced(), "non-longRunning (scheduled/oneoff) requests can not be load balanced");
       checkBadRequest(!request.isRackSensitive(), "non-longRunning (scheduled/oneoff) requests can not be rack sensitive");
     } else {
       checkBadRequest(!request.getNumRetriesOnFailure().isPresent(), "NumRetriesOnFailure can only be set for non-long running requests");
@@ -179,10 +179,6 @@ public class SingularityValidator {
     checkBadRequest(!deployId.contains("/") && !deployId.contains("-"), "Id must not contain / or - characters");
     checkBadRequest(deployId.length() < maxDeployIdSize, "Deploy id must be less than %s characters, it is %s (%s)", maxDeployIdSize, deployId.length(), deployId);
     checkBadRequest(deploy.getRequestId() != null && deploy.getRequestId().equals(request.getId()), "Deploy id must match request id");
-
-    if (request.isLoadBalanced()) {
-      checkBadRequest(deploy.getServiceBasePath().isPresent(), "Deploy for loadBalanced request must include serviceBasePath");
-    }
 
     checkForIllegalResources(request, deploy);
 

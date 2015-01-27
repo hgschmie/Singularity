@@ -114,8 +114,6 @@ public class TaskResource {
   public SingularityTaskRequest getPendingTask(@PathParam("pendingTaskId") String pendingTaskIdStr) {
     Optional<SingularityPendingTask> pendingTask = taskManager.getPendingTask(getPendingTaskIdFromStr(pendingTaskIdStr));
 
-    checkNotFound(pendingTask.isPresent(), "Couldn't find %s", pendingTaskIdStr);
-
     List<SingularityTaskRequest> taskRequestList = taskRequestManager.getTaskRequests(Collections.singletonList(pendingTask.get()));
 
     checkNotFound(!taskRequestList.isEmpty(), "Couldn't find: " + pendingTaskIdStr);
@@ -166,16 +164,6 @@ public class TaskResource {
   @ApiOperation("Retrieve the list of cleaning tasks.")
   public List<SingularityTaskCleanup> getCleaningTasks() {
     return taskManager.getCleanupTasks();
-  }
-
-  @GET
-  @Timed
-  @ExceptionMetered
-  @PropertyFiltering
-  @Path("/lbcleanup")
-  @ApiOperation("Retrieve the list of tasks being cleaned from load balancers.")
-  public List<SingularityTaskId> getLbCleanupTasks() {
-    return taskManager.getLBCleanupTasks();
   }
 
   private SingularityTask checkActiveTask(String taskId) {

@@ -29,7 +29,7 @@ public enum RequestType {
   }
 
   @Deprecated
-  public static RequestType fromDaemonAndScheduleAndLoadBalanced(Optional<String> schedule, Optional<Boolean> daemon, Optional<Boolean> loadBalanced) {
+  public static RequestType fromDaemonAndScheduleAndLoadBalanced(Optional<String> schedule, Optional<Boolean> daemon) {
     if (schedule.isPresent()) {
       return RequestType.SCHEDULED;
     }
@@ -38,10 +38,10 @@ public enum RequestType {
       return RequestType.ON_DEMAND;
     }
 
-    if (loadBalanced.isPresent() && loadBalanced.get().booleanValue()) {
-      return RequestType.SERVICE;
-    }
-
+//    if (loadBalanced.isPresent() && loadBalanced.get().booleanValue()) {
+//      return RequestType.SERVICE;
+//    }
+//
     return RequestType.WORKER;
   }
 

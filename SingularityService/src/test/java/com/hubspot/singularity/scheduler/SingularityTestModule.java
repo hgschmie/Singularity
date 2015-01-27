@@ -41,7 +41,6 @@ import com.hubspot.mesos.client.SingularityMesosClientModule;
 import com.hubspot.singularity.SingularityAbort;
 import com.hubspot.singularity.SingularityMainModule;
 import com.hubspot.singularity.SingularityTaskId;
-import com.hubspot.singularity.config.BaragonConfiguration;
 import com.hubspot.singularity.config.MesosConfiguration;
 import com.hubspot.singularity.config.SMTPConfiguration;
 import com.hubspot.singularity.config.SentryConfiguration;
@@ -53,7 +52,6 @@ import com.hubspot.singularity.data.transcoders.SingularityTranscoderModule;
 import com.hubspot.singularity.data.zkmigrations.SingularityZkMigrationsModule;
 import com.hubspot.singularity.event.SingularityEventModule;
 import com.hubspot.singularity.guice.GuiceBundle;
-import com.hubspot.singularity.hooks.LoadBalancerClient;
 import com.hubspot.singularity.mesos.SchedulerDriverSupplier;
 import com.hubspot.singularity.mesos.SingularityDriver;
 import com.hubspot.singularity.mesos.SingularityLogSupport;
@@ -123,10 +121,6 @@ public class SingularityTestModule implements Module {
             binder.bind(SingularityMailer.class).toInstance(mailer);
             binder.bind(SingularityAbort.class).toInstance(abort);
 
-            TestingLoadBalancerClient tlbc = new TestingLoadBalancerClient();
-            binder.bind(LoadBalancerClient.class).toInstance(tlbc);
-            binder.bind(TestingLoadBalancerClient.class).toInstance(tlbc);
-
             binder.bind(ObjectMapper.class).toInstance(Jackson.newObjectMapper()
                 .setSerializationInclusion(Include.NON_NULL)
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
@@ -181,9 +175,6 @@ public class SingularityTestModule implements Module {
 
   private static SingularityConfiguration getSingularityConfigurationForTestingServer(final TestingServer ts) {
     SingularityConfiguration config = new SingularityConfiguration();
-    BaragonConfiguration baragonConfiguration = new BaragonConfiguration();
-    baragonConfiguration.setLoadBalancerUri("test");
-    config.setBaragonConfiguration(baragonConfiguration);
 
     MesosConfiguration mc = new MesosConfiguration();
     mc.setDefaultCpus(1);

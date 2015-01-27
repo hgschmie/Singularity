@@ -1,7 +1,6 @@
 package com.hubspot.singularity.event;
 
 import com.hubspot.singularity.SingularityDeployUpdate;
-import com.hubspot.singularity.SingularityLoadBalancerUpdate;
 import com.hubspot.singularity.SingularityRequestHistory;
 import com.hubspot.singularity.SingularityTaskHistoryUpdate;
 
@@ -11,6 +10,4 @@ public interface SingularityEventListener {
   void taskHistoryUpdateEvent(SingularityTaskHistoryUpdate singularityTaskHistoryUpdate);
 
   void deployHistoryEvent(SingularityDeployUpdate singularityDeployUpdate);
-
-  void loadBalancerEvent(SingularityLoadBalancerUpdate loadBalancerUpdate);
 }
