@@ -27,8 +27,6 @@ public class SingularityRequestBuilder {
   private Optional<List<String>> rackAffinity;
   private Optional<SlavePlacement> slavePlacement;
 
-  private Optional<Boolean> loadBalanced;
-
   public SingularityRequestBuilder(String id) {
     this.id = id;
     this.owners = Optional.absent();
@@ -39,7 +37,6 @@ public class SingularityRequestBuilder {
     this.daemon = Optional.absent();
     this.instances = Optional.absent();
     this.rackSensitive = Optional.absent();
-    this.loadBalanced = Optional.absent();
     this.quartzSchedule = Optional.absent();
     this.rackAffinity = Optional.absent();
     this.slavePlacement = Optional.absent();
@@ -47,17 +44,8 @@ public class SingularityRequestBuilder {
   }
 
   public SingularityRequest build() {
-    return new SingularityRequest(id, owners, numRetriesOnFailure, schedule, daemon, instances, rackSensitive, loadBalanced, killOldNonLongRunningTasksAfterMillis, scheduleType, quartzSchedule,
+    return new SingularityRequest(id, owners, numRetriesOnFailure, schedule, daemon, instances, rackSensitive, killOldNonLongRunningTasksAfterMillis, scheduleType, quartzSchedule,
         rackAffinity, slavePlacement, scheduledExpectedRuntimeMillis);
-  }
-
-  public Optional<Boolean> getLoadBalanced() {
-    return loadBalanced;
-  }
-
-  public SingularityRequestBuilder setLoadBalanced(Optional<Boolean> loadBalanced) {
-    this.loadBalanced = loadBalanced;
-    return this;
   }
 
   public String getId() {
@@ -176,8 +164,7 @@ public class SingularityRequestBuilder {
   public String toString() {
     return "SingularityRequestBuilder [id=" + id + ", owners=" + owners + ", numRetriesOnFailure=" + numRetriesOnFailure + ", schedule=" + schedule + ", quartzSchedule=" + quartzSchedule
         + ", scheduleType=" + scheduleType + ", killOldNonLongRunningTasksAfterMillis=" + killOldNonLongRunningTasksAfterMillis + ", scheduledExpectedRuntimeMillis=" + scheduledExpectedRuntimeMillis
-        + ", daemon=" + daemon + ", instances=" + instances + ", rackSensitive=" + rackSensitive + ", rackAffinity=" + rackAffinity + ", slavePlacement=" + slavePlacement + ", loadBalanced="
-        + loadBalanced + "]";
+        + ", daemon=" + daemon + ", instances=" + instances + ", rackSensitive=" + rackSensitive + ", rackAffinity=" + rackAffinity + ", slavePlacement=" + slavePlacement + "]";
   }
 
 }

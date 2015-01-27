@@ -15,7 +15,6 @@ For a more thorough explanation of the concepts behind Singularity and Mesos cli
  - [Native Docker Support](Docs/containers.md)
  - [JSON REST API and Java Client](Docs/reference/api.md)
  - [Fully featured web application (replaces and improves Mesos Master UI)](Docs/ui.md)
- - Rich load balancer integration with Baragon
  - Deployments, automatic rollbacks, and healthchecks
  - Webhooks for third party integrations
  - Configurable email alerts to service owners

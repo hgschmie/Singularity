@@ -73,17 +73,12 @@ class NewDeployView extends FormBaseView
             memoryMb: parseInt(@valOrNothing '#memory-mb') or config.defaultMemory
             numPorts: parseInt(@valOrNothing '#num-ports') or 0
 
-        deployObject.serviceBasePath = @valOrNothing '#service-base-path'
-
         deployObject.healthcheckUri                        = @valOrNothing '#healthcheck-uri'
         deployObject.healthcheckIntervalSeconds            = @valOrNothing '#healthcheck-interval'
         deployObject.healthcheckTimeoutSeconds             = @valOrNothing '#healthcheck-timeout'
         deployObject.skipHealthchecksOnDeploy              = @valOrNothing '#skip-healthcheck'
         deployObject.deployHealthTimeoutSeconds            = @valOrNothing '#deploy-healthcheck-timeout'
         deployObject.considerHealthyAfterRunningForSeconds = @valOrNothing '#consider-healthy-after'
-
-        deployObject.loadBalancerGroups  = @multiList '.lb-group'
-        deployObject.loadBalancerOptions = @multiMap '.lb-option'
 
         deployObject.env = @multiMap '.env'
 

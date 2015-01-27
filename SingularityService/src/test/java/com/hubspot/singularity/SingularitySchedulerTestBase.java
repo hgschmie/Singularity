@@ -26,10 +26,7 @@ import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
-import com.hubspot.baragon.models.BaragonRequestState;
 import com.hubspot.mesos.MesosUtils;
-import com.hubspot.singularity.LoadBalancerRequestType.LoadBalancerRequestId;
-import com.hubspot.singularity.SingularityLoadBalancerUpdate.LoadBalancerMethod;
 import com.hubspot.singularity.SingularityPendingRequest.PendingType;
 import com.hubspot.singularity.SingularityRequestHistory.RequestHistoryType;
 import com.hubspot.singularity.api.SingularityDeployRequest;
@@ -49,7 +46,6 @@ import com.hubspot.singularity.scheduler.SingularityScheduler;
 import com.hubspot.singularity.scheduler.SingularitySchedulerPriority;
 import com.hubspot.singularity.scheduler.SingularitySchedulerStateCache;
 import com.hubspot.singularity.scheduler.SingularityTaskReconciliation;
-import com.hubspot.singularity.scheduler.TestingLoadBalancerClient;
 import com.hubspot.singularity.smtp.SingularityMailer;
 import com.ning.http.client.AsyncHttpClient;
 
@@ -79,8 +75,6 @@ public class SingularitySchedulerTestBase extends SingularityCuratorTestBase {
   protected SingularityCooldownChecker cooldownChecker;
   @Inject
   protected AsyncHttpClient httpClient;
-  @Inject
-  protected TestingLoadBalancerClient testingLbClient;
   @Inject
   protected SingularitySchedulerPriority schedulerPriority;
   @Inject
@@ -211,21 +205,16 @@ public class SingularitySchedulerTestBase extends SingularityCuratorTestBase {
     statusUpdate(task, state, Optional.<Long> absent());
   }
 
-  protected void initLoadBalancedRequest() {
-    protectedInitRequest(true, false);
-  }
-
   protected void initScheduledRequest() {
-    protectedInitRequest(false, true);
+    protectedInitRequest(true);
   }
 
   protected void saveRequest(SingularityRequest request) {
     requestManager.activate(request, RequestHistoryType.CREATED, System.currentTimeMillis(), Optional.<String> absent());
   }
 
-  protected void protectedInitRequest(boolean isLoadBalanced, boolean isScheduled) {
-    SingularityRequestBuilder bldr = new SingularityRequestBuilder(requestId)
-    .setLoadBalanced(Optional.of(isLoadBalanced));
+  protected void protectedInitRequest(boolean isScheduled) {
+    SingularityRequestBuilder bldr = new SingularityRequestBuilder(requestId);
 
     if (isScheduled) {
       bldr.setQuartzSchedule(Optional.of(schedule));
@@ -237,7 +226,7 @@ public class SingularitySchedulerTestBase extends SingularityCuratorTestBase {
   }
 
   protected void initRequest() {
-    protectedInitRequest(false, false);
+    protectedInitRequest(false);
   }
 
   protected void initFirstDeploy() {
@@ -265,7 +254,7 @@ public class SingularitySchedulerTestBase extends SingularityCuratorTestBase {
   }
 
   protected void startDeploy(SingularityDeployMarker deployMarker) {
-    deployManager.savePendingDeploy(new SingularityPendingDeploy(deployMarker, Optional.<SingularityLoadBalancerUpdate> absent(), DeployState.WAITING));
+    deployManager.savePendingDeploy(new SingularityPendingDeploy(deployMarker, DeployState.WAITING));
   }
 
   protected void finishDeploy(SingularityDeployMarker marker, SingularityDeploy deploy) {
@@ -312,14 +301,6 @@ public class SingularitySchedulerTestBase extends SingularityCuratorTestBase {
     requestManager.addToPendingQueue(new SingularityPendingRequest(bldr.getId(), firstDeployId, System.currentTimeMillis(), PendingType.UPDATED_REQUEST));
     scheduler.drainPendingQueue(stateCacheProvider.get());
   }
-
-  protected void saveLoadBalancerState(BaragonRequestState brs, SingularityTaskId taskId, LoadBalancerRequestType lbrt) {
-    final LoadBalancerRequestId lbri = new LoadBalancerRequestId(taskId.getId(), lbrt, Optional.<Integer> absent());
-    SingularityLoadBalancerUpdate update = new SingularityLoadBalancerUpdate(brs, lbri, Optional.<String> absent(), System.currentTimeMillis(), LoadBalancerMethod.CHECK_STATE, null);
-
-    taskManager.saveLoadBalancerState(taskId, lbrt, update);
-  }
-
 
   protected void sleep(long millis) {
     try {

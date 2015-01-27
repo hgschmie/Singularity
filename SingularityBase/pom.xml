@@ -11,10 +11,6 @@
   <artifactId>SingularityBase</artifactId>
 
   <dependencies>
-    <dependency>
-      <groupId>com.hubspot</groupId>
-      <artifactId>BaragonCore</artifactId>
-    </dependency>
 
     <dependency>
       <groupId>com.google.guava</groupId>

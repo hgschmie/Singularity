@@ -169,16 +169,6 @@ public class TaskResource {
     return taskManager.getCleanupTasks();
   }
 
-  @GET
-  @Timed
-  @ExceptionMetered
-  @PropertyFiltering
-  @Path("/lbcleanup")
-  @ApiOperation("Retrieve the list of tasks being cleaned from load balancers.")
-  public List<SingularityTaskId> getLbCleanupTasks() {
-    return taskManager.getLBCleanupTasks();
-  }
-
   private SingularityTask checkActiveTask(String taskId) {
     SingularityTaskId taskIdObj = getTaskIdFromStr(taskId);
 

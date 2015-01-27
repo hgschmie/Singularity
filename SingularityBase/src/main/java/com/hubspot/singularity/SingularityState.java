@@ -15,7 +15,6 @@ public class SingularityState {
   private final int lateTasks;
   private final int futureTasks;
   private final int cleaningTasks;
-  private final int lbCleanupTasks;
 
   private final long maxTaskLag;
 
@@ -46,7 +45,7 @@ public class SingularityState {
 
   @JsonCreator
   public SingularityState(@JsonProperty("activeTasks") int activeTasks, @JsonProperty("activeRequests") int activeRequests, @JsonProperty("cooldownRequests") int cooldownRequests,
-      @JsonProperty("pausedRequests") int pausedRequests, @JsonProperty("scheduledTasks") int scheduledTasks, @JsonProperty("pendingRequests") int pendingRequests, @JsonProperty("lbCleanupTasks") int lbCleanupTasks,
+      @JsonProperty("pausedRequests") int pausedRequests, @JsonProperty("scheduledTasks") int scheduledTasks, @JsonProperty("pendingRequests") int pendingRequests,
       @JsonProperty("cleaningRequests") int cleaningRequests, @JsonProperty("activeSlaves") int activeSlaves, @JsonProperty("deadSlaves") int deadSlaves,
       @JsonProperty("decomissioningSlaves") int decomissioningSlaves, @JsonProperty("activeRacks") int activeRacks, @JsonProperty("deadRacks") int deadRacks, @JsonProperty("decomissioningRacks") int decomissioningRacks,
       @JsonProperty("cleaningTasks") int cleaningTasks, @JsonProperty("hostStates") List<SingularityHostState> hostStates, @JsonProperty("oldestDeploy") long oldestDeploy, @JsonProperty("numDeploys") int numDeploys,
@@ -76,7 +75,6 @@ public class SingularityState {
     this.maxTaskLag = maxTaskLag;
     this.oldestDeploy = oldestDeploy;
     this.numDeploys = numDeploys;
-    this.lbCleanupTasks = lbCleanupTasks;
     this.underProvisionedRequests = underProvisionedRequests;
     this.overProvisionedRequests = overProvisionedRequests;
     this.overProvisionedRequestIds = overProvisionedRequestIds;
@@ -175,10 +173,6 @@ public class SingularityState {
     return maxTaskLag;
   }
 
-  public int getLbCleanupTasks() {
-    return lbCleanupTasks;
-  }
-
   public List<String> getOverProvisionedRequestIds() {
     return overProvisionedRequestIds;
   }
@@ -198,7 +192,7 @@ public class SingularityState {
   @Override
   public String toString() {
     return "SingularityState [activeTasks=" + activeTasks + ", pausedRequests=" + pausedRequests + ", activeRequests=" + activeRequests + ", cooldownRequests=" + cooldownRequests + ", scheduledTasks=" + scheduledTasks + ", lateTasks="
-        + lateTasks + ", futureTasks=" + futureTasks + ", cleaningTasks=" + cleaningTasks + ", lbCleanupTasks=" + lbCleanupTasks + ", maxTaskLag=" + maxTaskLag + ", pendingRequests=" + pendingRequests + ", cleaningRequests="
+        + lateTasks + ", futureTasks=" + futureTasks + ", cleaningTasks=" + cleaningTasks + ", maxTaskLag=" + maxTaskLag + ", pendingRequests=" + pendingRequests + ", cleaningRequests="
         + cleaningRequests + ", finishedRequests=" + finishedRequests + ", activeSlaves=" + activeSlaves + ", deadSlaves=" + deadSlaves + ", decomissioningSlaves=" + decomissioningSlaves + ", activeRacks=" + activeRacks + ", deadRacks="
         + deadRacks + ", decomissioningRacks=" + decomissioningRacks + ", oldestDeploy=" + oldestDeploy + ", numDeploys=" + numDeploys + ", generatedAt=" + generatedAt + ", hostStates=" + hostStates + ", overProvisionedRequestIds="
         + overProvisionedRequestIds + ", underProvisionedRequestIds=" + underProvisionedRequestIds + ", overProvisionedRequests=" + overProvisionedRequests + ", underProvisionedRequests=" + underProvisionedRequests + "]";

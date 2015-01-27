@@ -45,10 +45,6 @@ public class SingularityDeployBuilder {
 
   private Optional<Long> considerHealthyAfterRunningForSeconds;
 
-  private Optional<String> serviceBasePath;
-  private Optional<List<String>> loadBalancerGroups;
-  private Optional<Map<String, Object>> loadBalancerOptions;
-
   public SingularityDeployBuilder(String requestId, String id) {
     this.requestId = requestId;
     this.id = id;
@@ -73,9 +69,6 @@ public class SingularityDeployBuilder {
     this.skipHealthchecksOnDeploy = Optional.absent();
     this.deployHealthTimeoutSeconds = Optional.absent();
     this.considerHealthyAfterRunningForSeconds = Optional.absent();
-    this.serviceBasePath = Optional.absent();
-    this.loadBalancerGroups = Optional.absent();
-    this.loadBalancerOptions = Optional.absent();
   }
 
   public SingularityDeploy build() {
@@ -91,7 +84,7 @@ public class SingularityDeployBuilder {
 
     return new SingularityDeploy(requestId, id, command, arguments, containerInfo, customExecutorCmd, customExecutorId, customExecutorSource, buildResources, buildRequestedResources,
         requestedAttributes, env, uris, metadata, executorData, version, timestamp, deployHealthTimeoutSeconds, healthcheckUri, healthcheckIntervalSeconds, healthcheckTimeoutSeconds,
-        serviceBasePath, loadBalancerGroups, considerHealthyAfterRunningForSeconds, loadBalancerOptions, skipHealthchecksOnDeploy);
+        considerHealthyAfterRunningForSeconds, skipHealthchecksOnDeploy);
   }
 
   public String getRequestId() {
@@ -280,33 +273,6 @@ public class SingularityDeployBuilder {
 
   public SingularityDeployBuilder setHealthcheckTimeoutSeconds(Optional<Long> healthcheckTimeoutSeconds) {
     this.healthcheckTimeoutSeconds = healthcheckTimeoutSeconds;
-    return this;
-  }
-
-  public Optional<String> getServiceBasePath() {
-    return serviceBasePath;
-  }
-
-  public SingularityDeployBuilder setServiceBasePath(Optional<String> serviceBasePath) {
-    this.serviceBasePath = serviceBasePath;
-    return this;
-  }
-
-  public Optional<List<String>> getLoadBalancerGroups() {
-    return loadBalancerGroups;
-  }
-
-  public SingularityDeployBuilder setLoadBalancerGroups(Optional<List<String>> loadBalancerGroups) {
-    this.loadBalancerGroups = loadBalancerGroups;
-    return this;
-  }
-
-  public Optional<Map<String, Object>> getLoadBalancerOptions() {
-    return loadBalancerOptions;
-  }
-
-  public SingularityDeployBuilder setLoadBalancerOptions(Optional<Map<String, Object>> loadBalancerOptions) {
-    this.loadBalancerOptions = loadBalancerOptions;
     return this;
   }
 

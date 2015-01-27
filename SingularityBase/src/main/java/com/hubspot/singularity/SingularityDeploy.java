@@ -52,10 +52,6 @@ public class SingularityDeploy {
 
   private final Optional<Long> considerHealthyAfterRunningForSeconds;
 
-  private final Optional<String> serviceBasePath;
-  private final Optional<List<String>> loadBalancerGroups;
-  private final Optional<Map<String, Object>> loadBalancerOptions;
-
   public static SingularityDeployBuilder newBuilder(String requestId, String id) {
     return new SingularityDeployBuilder(requestId, id);
   }
@@ -82,10 +78,7 @@ public class SingularityDeploy {
       @JsonProperty("healthcheckUri") Optional<String> healthcheckUri,
       @JsonProperty("healthcheckIntervalSeconds") Optional<Long> healthcheckIntervalSeconds,
       @JsonProperty("healthcheckTimeoutSeconds") Optional<Long> healthcheckTimeoutSeconds,
-      @JsonProperty("serviceBasePath") Optional<String> serviceBasePath,
-      @JsonProperty("loadBalancerGroups") Optional<List<String>> loadBalancerGroups,
       @JsonProperty("considerHealthyAfterRunningForSeconds") Optional<Long> considerHealthyAfterRunningForSeconds,
-      @JsonProperty("loadBalancerOptions") Optional<Map<String, Object>> loadBalancerOptions,
       @JsonProperty("skipHealthchecksOnDeploy") Optional<Boolean> skipHealthchecksOnDeploy) {
     this.requestId = requestId;
     this.id = id;
@@ -110,10 +103,6 @@ public class SingularityDeploy {
     this.considerHealthyAfterRunningForSeconds = considerHealthyAfterRunningForSeconds;
 
     this.deployHealthTimeoutSeconds = deployHealthTimeoutSeconds;
-
-    this.serviceBasePath = serviceBasePath;
-    this.loadBalancerGroups = loadBalancerGroups;
-    this.loadBalancerOptions = loadBalancerOptions;
 
     this.metadata = metadata;
     this.version = version;
@@ -140,9 +129,6 @@ public class SingularityDeploy {
     .setSkipHealthchecksOnDeploy(skipHealthchecksOnDeploy)
     .setConsiderHealthyAfterRunningForSeconds(considerHealthyAfterRunningForSeconds)
     .setDeployHealthTimeoutSeconds(deployHealthTimeoutSeconds)
-    .setServiceBasePath(serviceBasePath)
-    .setLoadBalancerGroups(copyOfList(loadBalancerGroups))
-    .setLoadBalancerOptions(copyOfMap(loadBalancerOptions))
     .setMetadata(copyOfMap(metadata))
     .setVersion(version)
     .setTimestamp(timestamp)
@@ -256,24 +242,9 @@ public class SingularityDeploy {
     return healthcheckTimeoutSeconds;
   }
 
-  @ApiModelProperty(required = false, value = "The base path for the API exposed by the deploy. Used in conjunction with the Load balancer API.")
-  public Optional<String> getServiceBasePath() {
-    return serviceBasePath;
-  }
-
   @ApiModelProperty(required = false, value = "Number of seconds that a service must be healthy to consider the deployment to be successful.")
   public Optional<Long> getConsiderHealthyAfterRunningForSeconds() {
     return considerHealthyAfterRunningForSeconds;
-  }
-
-  @ApiModelProperty(required = false, value = "List of load balancer groups associated with this deployment.")
-  public Optional<List<String>> getLoadBalancerGroups() {
-    return loadBalancerGroups;
-  }
-
-  @ApiModelProperty(required = false, value = "Map (Key/Value) of options for the load balancer.")
-  public Optional<Map<String, Object>> getLoadBalancerOptions() {
-    return loadBalancerOptions;
   }
 
   @ApiModelProperty(required = false, value = "Allows skipping of health checks when deploying.")

@@ -1,6 +1,5 @@
 package com.hubspot.singularity.scheduler;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -17,14 +16,9 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import com.hubspot.baragon.models.BaragonRequestState;
 import com.hubspot.mesos.JavaUtils;
-import com.hubspot.singularity.LoadBalancerRequestType;
-import com.hubspot.singularity.LoadBalancerRequestType.LoadBalancerRequestId;
 import com.hubspot.singularity.SingularityAbort;
 import com.hubspot.singularity.SingularityAbort.AbortReason;
-import com.hubspot.singularity.SingularityLoadBalancerUpdate;
-import com.hubspot.singularity.SingularityLoadBalancerUpdate.LoadBalancerMethod;
 import com.hubspot.singularity.SingularityMainModule;
 import com.hubspot.singularity.SingularityTask;
 import com.hubspot.singularity.SingularityTaskCleanup;
@@ -34,7 +28,6 @@ import com.hubspot.singularity.SingularityTaskHistoryUpdate;
 import com.hubspot.singularity.SingularityTaskHistoryUpdate.SimplifiedTaskState;
 import com.hubspot.singularity.config.SingularityConfiguration;
 import com.hubspot.singularity.data.TaskManager;
-import com.hubspot.singularity.hooks.LoadBalancerClient;
 import com.hubspot.singularity.sentry.SingularityExceptionNotifier;
 
 /**
@@ -49,7 +42,6 @@ public class SingularityNewTaskChecker {
 
   private final SingularityConfiguration configuration;
   private final TaskManager taskManager;
-  private final LoadBalancerClient lbClient;
   private final long killAfterUnhealthyMillis;
 
   private final Map<String, Future<?>> taskIdToCheck;
@@ -61,10 +53,9 @@ public class SingularityNewTaskChecker {
 
   @Inject
   public SingularityNewTaskChecker(@Named(SingularityMainModule.NEW_TASK_THREADPOOL_NAME) ScheduledExecutorService executorService,
-      SingularityConfiguration configuration, LoadBalancerClient lbClient, TaskManager taskManager, SingularityExceptionNotifier exceptionNotifier, SingularityAbort abort) {
+      SingularityConfiguration configuration, TaskManager taskManager, SingularityExceptionNotifier exceptionNotifier, SingularityAbort abort) {
     this.configuration = configuration;
     this.taskManager = taskManager;
-    this.lbClient = lbClient;
     this.abort = abort;
 
     this.taskIdToCheck = Maps.newConcurrentMap();
@@ -84,8 +75,6 @@ public class SingularityNewTaskChecker {
 
     if (hasHealthcheck(task)) {
       delaySeconds += task.getTaskRequest().getDeploy().getHealthcheckIntervalSeconds().or(configuration.getHealthcheckIntervalSeconds());
-    } else if (task.getTaskRequest().getRequest().isLoadBalanced()) {
-      return delaySeconds;
     }
 
     delaySeconds += task.getTaskRequest().getDeploy().getDeployHealthTimeoutSeconds().or(configuration.getDeployHealthyBySeconds());
@@ -248,56 +237,7 @@ public class SingularityNewTaskChecker {
       }
     }
 
-    // task is running + has succeeded healthcheck if available.
-    if (!task.getTaskRequest().getRequest().isLoadBalanced()) {
-      return CheckTaskState.HEALTHY;
-    }
-
-    Optional<SingularityLoadBalancerUpdate> lbUpdate = taskManager.getLoadBalancerState(task.getTaskId(), LoadBalancerRequestType.ADD);
-    SingularityLoadBalancerUpdate newLbUpdate = null;
-
-    final LoadBalancerRequestId loadBalancerRequestId = new LoadBalancerRequestId(task.getTaskId().getId(), LoadBalancerRequestType.ADD, Optional.<Integer> absent());
-
-    if (!lbUpdate.isPresent() || lbUpdate.get().getLoadBalancerState() == BaragonRequestState.UNKNOWN) {
-      taskManager.saveLoadBalancerState(task.getTaskId(), LoadBalancerRequestType.ADD,
-          new SingularityLoadBalancerUpdate(BaragonRequestState.UNKNOWN, loadBalancerRequestId, Optional.<String> absent(), System.currentTimeMillis(), LoadBalancerMethod.PRE_ENQUEUE, Optional.<String> absent()));
-
-      newLbUpdate = lbClient.enqueue(loadBalancerRequestId, task.getTaskRequest().getRequest(), task.getTaskRequest().getDeploy(), Collections.singletonList(task), Collections.<SingularityTask> emptyList());
-    } else {
-      Optional<CheckTaskState> maybeCheckTaskState = checkLbState(lbUpdate.get().getLoadBalancerState());
-
-      if (maybeCheckTaskState.isPresent()) {
-        return maybeCheckTaskState.get();
-      }
-
-      newLbUpdate = lbClient.getState(loadBalancerRequestId);
-    }
-
-    taskManager.saveLoadBalancerState(task.getTaskId(), LoadBalancerRequestType.ADD, newLbUpdate);
-
-    Optional<CheckTaskState> maybeCheckTaskState = checkLbState(newLbUpdate.getLoadBalancerState());
-
-    if (maybeCheckTaskState.isPresent()) {
-      return maybeCheckTaskState.get();
-    }
-
-    return CheckTaskState.LB_IN_PROGRESS_CHECK_AGAIN;
-  }
-
-  private Optional<CheckTaskState> checkLbState(BaragonRequestState lbState) {
-    switch (lbState) {
-      case SUCCESS:
-        return Optional.of(CheckTaskState.HEALTHY);
-      case CANCELED:
-      case FAILED:
-        return Optional.of(CheckTaskState.UNHEALTHY_KILL_TASK);
-      case CANCELING:
-      case UNKNOWN:
-      case WAITING:
-        break;
-    }
-
-    return Optional.absent();
+    return CheckTaskState.HEALTHY;
   }
 
   private boolean isOverdue(SingularityTask task) {

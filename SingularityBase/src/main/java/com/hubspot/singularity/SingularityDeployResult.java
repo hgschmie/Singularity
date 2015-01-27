@@ -7,33 +7,22 @@ import com.google.common.base.Optional;
 public class SingularityDeployResult {
 
   private final DeployState deployState;
-  private final Optional<SingularityLoadBalancerUpdate> lbUpdate;
   private final Optional<String> message;
   private final long timestamp;
 
   public SingularityDeployResult(DeployState deployState) {
-    this(deployState, Optional.<String> absent(), Optional.<SingularityLoadBalancerUpdate> absent(), System.currentTimeMillis());
-  }
-
-  public SingularityDeployResult(DeployState deployState, SingularityLoadBalancerUpdate lbUpdate) {
-    this(deployState, Optional.of(String.format("Load balancer had state %s%s", lbUpdate.getLoadBalancerState(), lbUpdate.getMessage().isPresent() && lbUpdate.getMessage().get().length() > 0 ? String.format(" (%s)", lbUpdate.getMessage().get()) : "")), Optional.of(lbUpdate), System.currentTimeMillis());
+    this(deployState, Optional.<String> absent(), System.currentTimeMillis());
   }
 
   public SingularityDeployResult(DeployState deployState, String message) {
-    this(deployState, Optional.of(message), Optional.<SingularityLoadBalancerUpdate> absent(), System.currentTimeMillis());
+    this(deployState, Optional.of(message), System.currentTimeMillis());
   }
 
   @JsonCreator
-  public SingularityDeployResult(@JsonProperty("deployState") DeployState deployState, @JsonProperty("message") Optional<String> message, @JsonProperty("lbUpdate") Optional<SingularityLoadBalancerUpdate> lbUpdate,
-      @JsonProperty("timestamp") long timestamp) {
+  public SingularityDeployResult(@JsonProperty("deployState") DeployState deployState, @JsonProperty("message") Optional<String> message, @JsonProperty("timestamp") long timestamp) {
     this.deployState = deployState;
-    this.lbUpdate = lbUpdate;
     this.message = message;
     this.timestamp = timestamp;
-  }
-
-  public Optional<SingularityLoadBalancerUpdate> getLbUpdate() {
-    return lbUpdate;
   }
 
   public Optional<String> getMessage() {
@@ -50,7 +39,7 @@ public class SingularityDeployResult {
 
   @Override
   public String toString() {
-    return "SingularityDeployResult [deployState=" + deployState + ", lbUpdate=" + lbUpdate + ", message=" + message + ", timestamp=" + timestamp + "]";
+    return "SingularityDeployResult [deployState=" + deployState + ", message=" + message + ", timestamp=" + timestamp + "]";
   }
 
 }

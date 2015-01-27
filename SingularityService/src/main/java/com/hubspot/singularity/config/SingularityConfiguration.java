@@ -98,10 +98,6 @@ public class SingularityConfiguration extends Configuration {
   @Valid
   private MesosConfiguration mesosConfiguration;
 
-  @JsonProperty("baragon")
-  @Valid
-  private BaragonConfiguration baragonConfiguration;
-
   private int newTaskCheckerBaseDelaySeconds = 1;
 
   private long persistHistoryEverySeconds = TimeUnit.HOURS.toSeconds(1);
@@ -286,10 +282,6 @@ public class SingularityConfiguration extends Configuration {
 
   public MesosConfiguration getMesosConfiguration() {
     return mesosConfiguration;
-  }
-
-  public Optional<BaragonConfiguration> getBaragonConfiguration() {
-    return Optional.fromNullable(baragonConfiguration);
   }
 
   public int getNewTaskCheckerBaseDelaySeconds() {
@@ -530,10 +522,6 @@ public class SingularityConfiguration extends Configuration {
 
   public void setMesosConfiguration(MesosConfiguration mesosConfiguration) {
     this.mesosConfiguration = mesosConfiguration;
-  }
-
-  public void setBaragonConfiguration(BaragonConfiguration baragonConfiguration) {
-    this.baragonConfiguration = baragonConfiguration;
   }
 
   public void setNewTaskCheckerBaseDelaySeconds(int newTaskCheckerBaseDelaySeconds) {

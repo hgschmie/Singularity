@@ -42,8 +42,6 @@ class NewRequest extends FormBaseView
             requestObject.instances     = instances if instances
             requestObject.rackSensitive = @$("#rack-sensitive-#{ type }").is ':checked'
 
-            if type is 'service'
-                requestObject.loadBalanced  = @$('#load-balanced').is ':checked'
         else if type is 'scheduled'
             schedule = @$('#schedule').val()
             retries  = parseInt @$('#retries-on-failure').val()

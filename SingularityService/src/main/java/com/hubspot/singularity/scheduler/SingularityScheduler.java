@@ -443,8 +443,6 @@ public class SingularityScheduler {
       taskManager.deleteActiveTask(taskId.getId());
     }
 
-    taskManager.createLBCleanupTask(taskId);
-
     final Optional<PendingType> scheduleResult = handleCompletedTaskWithStatistics(taskId, timestamp, state, deployStatistics, taskHistoryUpdateCreateResult, stateCache);
 
     if (taskHistoryUpdateCreateResult == SingularityCreateResult.EXISTED) {
