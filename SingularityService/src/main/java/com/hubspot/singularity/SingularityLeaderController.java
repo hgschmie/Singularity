@@ -25,7 +25,6 @@ import com.hubspot.mesos.MesosUtils;
 import com.hubspot.singularity.SingularityAbort.AbortReason;
 import com.hubspot.singularity.config.SingularityConfiguration;
 import com.hubspot.singularity.data.StateManager;
-import com.hubspot.singularity.sentry.SingularityExceptionNotifier;
 
 @Singleton
 public class SingularityLeaderController implements Managed, LeaderLatchListener {
@@ -35,7 +34,6 @@ public class SingularityLeaderController implements Managed, LeaderLatchListener
   private final StateManager stateManager;
   private final SingularityDriverManager driverManager;
   private final SingularityAbort abort;
-  private final SingularityExceptionNotifier exceptionNotifier;
   private final HostAndPort hostAndPort;
   private final String hostAddress;
 
@@ -46,12 +44,11 @@ public class SingularityLeaderController implements Managed, LeaderLatchListener
   private volatile boolean master;
 
   @Inject
-  public SingularityLeaderController(StateManager stateManager, SingularityConfiguration configuration, SingularityDriverManager driverManager, SingularityAbort abort, SingularityExceptionNotifier exceptionNotifier,
+  public SingularityLeaderController(StateManager stateManager, SingularityConfiguration configuration, SingularityDriverManager driverManager, SingularityAbort abort,
       @Named(SingularityMainModule.HOST_ADDRESS_PROPERTY) String hostAddress, @Named(SingularityMainModule.HTTP_HOST_AND_PORT) HostAndPort hostAndPort) {
     this.driverManager = driverManager;
     this.stateManager = stateManager;
     this.abort = abort;
-    this.exceptionNotifier = exceptionNotifier;
 
     this.hostAddress = hostAddress;
     this.hostAndPort = hostAndPort;
@@ -83,7 +80,6 @@ public class SingularityLeaderController implements Managed, LeaderLatchListener
         statePoller.wake();
       } catch (Throwable t) {
         LOG.error("While starting driver", t);
-        exceptionNotifier.notify(t);
         abort.abort(AbortReason.UNRECOVERABLE_ERROR);
       }
 
@@ -122,7 +118,6 @@ public class SingularityLeaderController implements Managed, LeaderLatchListener
         statePoller.wake();
       } catch (Throwable t) {
         LOG.error("While stopping driver", t);
-        exceptionNotifier.notify(t);
       } finally {
         abort.abort(AbortReason.LOST_LEADERSHIP);
       }
@@ -196,7 +191,6 @@ public class SingularityLeaderController implements Managed, LeaderLatchListener
           LOG.trace("Caught interrupted exception, running the loop");
         } catch (Throwable t) {
           LOG.error("Caught exception while saving state", t);
-          exceptionNotifier.notify(t);
         }
         finally {
           lock.unlock();

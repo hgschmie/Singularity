@@ -29,7 +29,6 @@ public class SingularityResourceModule extends AbstractModule {
     bind(HistoryResource.class);
     bind(RackResource.class);
     bind(RequestResource.class);
-    bind(S3LogResource.class);
     bind(SandboxResource.class);
     bind(SlaveResource.class);
     bind(StateResource.class);

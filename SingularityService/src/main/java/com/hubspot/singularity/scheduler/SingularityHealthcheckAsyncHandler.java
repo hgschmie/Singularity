@@ -19,7 +19,6 @@ import com.hubspot.singularity.SingularityTask;
 import com.hubspot.singularity.SingularityTaskHealthcheckResult;
 import com.hubspot.singularity.config.SingularityConfiguration;
 import com.hubspot.singularity.data.TaskManager;
-import com.hubspot.singularity.sentry.SingularityExceptionNotifier;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
@@ -30,7 +29,6 @@ public class SingularityHealthcheckAsyncHandler implements Callback {
   private static final Logger LOG = LoggerFactory.getLogger(SingularityHealthchecker.class);
 
   private final long startTime;
-  private final SingularityExceptionNotifier exceptionNotifier;
   private final SingularityHealthchecker healthchecker;
   private final SingularityNewTaskChecker newTaskChecker;
   private final SingularityTask task;
@@ -38,8 +36,7 @@ public class SingularityHealthcheckAsyncHandler implements Callback {
   private final SingularityAbort abort;
   private final int maxHealthcheckResponseBodyBytes;
 
-  public SingularityHealthcheckAsyncHandler(SingularityExceptionNotifier exceptionNotifier, SingularityConfiguration configuration, SingularityHealthchecker healthchecker, SingularityNewTaskChecker newTaskChecker, TaskManager taskManager, SingularityAbort abort, SingularityTask task) {
-    this.exceptionNotifier = exceptionNotifier;
+  public SingularityHealthcheckAsyncHandler(SingularityConfiguration configuration, SingularityHealthchecker healthchecker, SingularityNewTaskChecker newTaskChecker, TaskManager taskManager, SingularityAbort abort, SingularityTask task) {
     this.taskManager = taskManager;
     this.newTaskChecker = newTaskChecker;
     this.healthchecker = healthchecker;
@@ -92,7 +89,6 @@ public class SingularityHealthcheckAsyncHandler implements Callback {
       }
     } catch (Throwable t) {
       LOG.error("Caught throwable while saving health check result {}, will re-enqueue", result, t);
-      exceptionNotifier.notify(t);
 
       reEnqueueOrAbort(task);
     }
@@ -103,7 +99,6 @@ public class SingularityHealthcheckAsyncHandler implements Callback {
       healthchecker.enqueueHealthcheck(task);
     } catch (Throwable t) {
       LOG.error("Caught throwable while re-enqueuing health check for {}, aborting", task.getTaskId(), t);
-      exceptionNotifier.notify(t);
 
       abort.abort(AbortReason.UNRECOVERABLE_ERROR);
     }

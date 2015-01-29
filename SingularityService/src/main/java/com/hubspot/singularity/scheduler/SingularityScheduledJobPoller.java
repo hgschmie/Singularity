@@ -24,7 +24,6 @@ import com.hubspot.singularity.config.SingularityConfiguration;
 import com.hubspot.singularity.data.DeployManager;
 import com.hubspot.singularity.data.RequestManager;
 import com.hubspot.singularity.data.TaskManager;
-import com.hubspot.singularity.sentry.SingularityExceptionNotifier;
 import com.hubspot.singularity.smtp.SingularityMailer;
 
 @Singleton
@@ -37,18 +36,16 @@ public class SingularityScheduledJobPoller extends SingularityLeaderOnlyPoller {
   private final DeployManager deployManager;
   private final SingularityMailer mailer;
   private final SingularityConfiguration configuration;
-  private final SingularityExceptionNotifier exceptionNotifier;
 
   @Inject
-  public SingularityScheduledJobPoller(SingularityExceptionNotifier exceptionNotifier, TaskManager taskManager,
-      SingularityConfiguration configuration, RequestManager requestManager, DeployManager deployManager, SingularityMailer mailer) {
+  public SingularityScheduledJobPoller(TaskManager taskManager, SingularityConfiguration configuration,
+      RequestManager requestManager, DeployManager deployManager, SingularityMailer mailer) {
 
     super(configuration.getCheckScheduledJobsEveryMillis(), TimeUnit.MILLISECONDS);
 
     this.taskManager = taskManager;
     this.deployManager = deployManager;
     this.configuration = configuration;
-    this.exceptionNotifier = exceptionNotifier;
     this.requestManager = requestManager;
     this.mailer = mailer;
   }
@@ -115,7 +112,6 @@ public class SingularityScheduledJobPoller extends SingularityLeaderOnlyPoller {
         cronExpression = new CronExpression(request.getRequest().getQuartzScheduleSafe());
       } catch (ParseException e) {
         LOG.warn("Unable to parse cron for {} ({})", taskId, request.getRequest().getQuartzScheduleSafe(), e);
-        exceptionNotifier.notify(e);
         return Optional.absent();
       }
 
@@ -125,7 +121,6 @@ public class SingularityScheduledJobPoller extends SingularityLeaderOnlyPoller {
       if (nextRunAtDate == null) {
         String msg = String.format("No next run date found for %s (%s)", taskId, request.getRequest().getQuartzScheduleSafe());
         LOG.warn(msg);
-        exceptionNotifier.notify(msg);
         return Optional.absent();
       }
 

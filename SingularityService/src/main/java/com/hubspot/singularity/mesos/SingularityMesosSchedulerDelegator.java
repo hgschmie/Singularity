@@ -30,14 +30,11 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.singularity.SingularityAbort;
 import com.hubspot.singularity.SingularityAbort.AbortReason;
-import com.hubspot.singularity.sentry.SingularityExceptionNotifier;
 
 @Singleton
 public class SingularityMesosSchedulerDelegator implements Scheduler {
 
   private static final Logger LOG = LoggerFactory.getLogger(SingularityMesosSchedulerDelegator.class);
-
-  private final SingularityExceptionNotifier exceptionNotifier;
 
   private final SingularityStartup startup;
   private final SingularityAbort abort;
@@ -62,14 +59,12 @@ public class SingularityMesosSchedulerDelegator implements Scheduler {
 
   @Inject
   SingularityMesosSchedulerDelegator(@Named(SingularityMesosModule.SCHEDULER_LOCK_NAME) final Lock lock, final Set<SingularitySchedulerParticipant> participants,
-      final SchedulerDriverSupplier schedulerDriverSupplier, final SingularityExceptionNotifier exceptionNotifier, final SingularityStartup startup,
+      final SchedulerDriverSupplier schedulerDriverSupplier, final SingularityStartup startup,
       final SingularityAbort abort) {
 
     this.lock = lock;
     this.participants = participants;
     this.schedulerDriverSupplier = schedulerDriverSupplier;
-
-    this.exceptionNotifier = exceptionNotifier;
 
     this.startup = startup;
     this.abort = abort;
@@ -130,7 +125,6 @@ public class SingularityMesosSchedulerDelegator implements Scheduler {
       }
     } catch (Throwable t) {
       LOG.error("Startup threw an uncaught exception - exiting", t);
-      exceptionNotifier.notify(t);
       abort.abort(AbortReason.UNRECOVERABLE_ERROR);
     }
   }
@@ -334,7 +328,6 @@ public class SingularityMesosSchedulerDelegator implements Scheduler {
           delegator.delegate(participant);
         } catch (Throwable t) {
           LOG.error("Scheduler {} threw an uncaught exception - exiting", participant.getClass().getSimpleName(), t);
-          exceptionNotifier.notify(t);
           exceptionCaught = true;
         }
       }

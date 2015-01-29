@@ -28,7 +28,6 @@ import com.hubspot.singularity.SingularityTaskHistoryUpdate;
 import com.hubspot.singularity.SingularityTaskHistoryUpdate.SimplifiedTaskState;
 import com.hubspot.singularity.config.SingularityConfiguration;
 import com.hubspot.singularity.data.TaskManager;
-import com.hubspot.singularity.sentry.SingularityExceptionNotifier;
 
 /**
  * Handles tasks we need to check for staleness | load balancer state, etc - tasks that are not part of a deploy. ie, new replacement tasks.
@@ -49,11 +48,10 @@ public class SingularityNewTaskChecker {
   private final ScheduledExecutorService executorService;
 
   private final SingularityAbort abort;
-  private final SingularityExceptionNotifier exceptionNotifier;
 
   @Inject
   public SingularityNewTaskChecker(@Named(SingularityMainModule.NEW_TASK_THREADPOOL_NAME) ScheduledExecutorService executorService,
-      SingularityConfiguration configuration, TaskManager taskManager, SingularityExceptionNotifier exceptionNotifier, SingularityAbort abort) {
+      SingularityConfiguration configuration, TaskManager taskManager, SingularityAbort abort) {
     this.configuration = configuration;
     this.taskManager = taskManager;
     this.abort = abort;
@@ -62,8 +60,6 @@ public class SingularityNewTaskChecker {
     this.killAfterUnhealthyMillis = TimeUnit.SECONDS.toMillis(configuration.getKillAfterTasksDoNotRunDefaultSeconds());
 
     this.executorService = executorService;
-
-    this.exceptionNotifier = exceptionNotifier;
   }
 
   private boolean hasHealthcheck(SingularityTask task) {
@@ -147,7 +143,6 @@ public class SingularityNewTaskChecker {
           checkTask(task);
         } catch (Throwable t) {
           LOG.error("Uncaught throwable in task check for task {}, re-enqueing", task, t);
-          exceptionNotifier.notify(t);
 
           reEnqueueCheckOrAbort(task);
         }
@@ -160,7 +155,6 @@ public class SingularityNewTaskChecker {
       reEnqueueCheck(task);
     } catch (Throwable t) {
       LOG.error("Uncaught throwable re-enqueuing task check for task {}, aborting", task, t);
-      exceptionNotifier.notify(t);
       abort.abort(AbortReason.UNRECOVERABLE_ERROR);
     }
   }

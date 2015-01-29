@@ -23,7 +23,6 @@ import com.hubspot.singularity.SingularityPendingDeploy;
 import com.hubspot.singularity.SingularityTask;
 import com.hubspot.singularity.config.SingularityConfiguration;
 import com.hubspot.singularity.data.TaskManager;
-import com.hubspot.singularity.sentry.SingularityExceptionNotifier;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 
@@ -42,18 +41,15 @@ public class SingularityHealthchecker {
 
   private final ScheduledExecutorService executorService;
 
-  private final SingularityExceptionNotifier exceptionNotifier;
-
   @Inject
   public SingularityHealthchecker(@Named(SingularityMainModule.HEALTHCHECK_THREADPOOL_NAME) ScheduledExecutorService executorService,
       OkHttpClient httpClient, SingularityConfiguration configuration, SingularityNewTaskChecker newTaskChecker,
-      TaskManager taskManager, SingularityAbort abort, SingularityExceptionNotifier exceptionNotifier) {
+      TaskManager taskManager, SingularityAbort abort) {
     this.httpClient = httpClient;
     this.configuration = configuration;
     this.newTaskChecker = newTaskChecker;
     this.taskManager = taskManager;
     this.abort = abort;
-    this.exceptionNotifier = exceptionNotifier;
 
     this.taskIdToHealthcheck = Maps.newConcurrentMap();
 
@@ -106,7 +102,6 @@ public class SingularityHealthchecker {
           asyncHealthcheck(task);
         } catch (Throwable t) {
           LOG.error("Uncaught throwable in async healthcheck", t);
-          exceptionNotifier.notify(t);
         }
       }
 
@@ -153,7 +148,7 @@ public class SingularityHealthchecker {
   }
 
   private void asyncHealthcheck(final SingularityTask task) {
-    final SingularityHealthcheckAsyncHandler handler = new SingularityHealthcheckAsyncHandler(exceptionNotifier, configuration, this, newTaskChecker, taskManager, abort, task);
+    final SingularityHealthcheckAsyncHandler handler = new SingularityHealthcheckAsyncHandler(configuration, this, newTaskChecker, taskManager, abort, task);
     final Optional<String> uri = getHealthcheckUri(task);
 
     if (!uri.isPresent()) {

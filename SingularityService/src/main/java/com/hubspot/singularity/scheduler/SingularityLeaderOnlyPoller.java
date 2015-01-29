@@ -19,7 +19,6 @@ import com.hubspot.singularity.SingularityAbort;
 import com.hubspot.singularity.SingularityAbort.AbortReason;
 import com.hubspot.singularity.SingularityMainModule;
 import com.hubspot.singularity.mesos.SingularityMesosSchedulerDelegator;
-import com.hubspot.singularity.sentry.SingularityExceptionNotifier;
 
 public abstract class SingularityLeaderOnlyPoller implements Managed {
 
@@ -31,7 +30,6 @@ public abstract class SingularityLeaderOnlyPoller implements Managed {
 
   private ScheduledExecutorService executorService;
   private LeaderLatch leaderLatch;
-  private SingularityExceptionNotifier exceptionNotifier;
   private SingularityAbort abort;
   private SingularityMesosSchedulerDelegator mesosScheduler;
 
@@ -52,13 +50,9 @@ public abstract class SingularityLeaderOnlyPoller implements Managed {
 
   @Inject
   void injectPollerDependencies(@Named(SingularityMainModule.CORE_THREADPOOL_NAME) ScheduledExecutorService executorService,
-      LeaderLatch leaderLatch,
-      SingularityExceptionNotifier exceptionNotifier,
-      SingularityAbort abort,
-      SingularityMesosSchedulerDelegator mesosScheduler) {
+      LeaderLatch leaderLatch, SingularityAbort abort, SingularityMesosSchedulerDelegator mesosScheduler) {
     this.executorService = executorService;
     this.leaderLatch = checkNotNull(leaderLatch, "leaderLatch is null");
-    this.exceptionNotifier = checkNotNull(exceptionNotifier, "exceptionNotifier is null");
     this.abort = checkNotNull(abort, "abort is null");
     this.mesosScheduler = checkNotNull(mesosScheduler, "mesosScheduler is null");
   }
@@ -109,7 +103,6 @@ public abstract class SingularityLeaderOnlyPoller implements Managed {
       runActionOnPoll();
     } catch (Throwable t) {
       LOG.error("Caught an exception while running {}", getClass().getSimpleName(), t);
-      exceptionNotifier.notify(t);
       if (abortsOnError()) {
         abort.abort(AbortReason.UNRECOVERABLE_ERROR);
       }
