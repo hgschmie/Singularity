@@ -85,16 +85,7 @@
   <modules>
     <module>SingularityService</module>
     <module>SingularityBase</module>
-    <module>SingularityRunnerBase</module>
-    <module>SingularityS3Base</module>
     <module>SingularityMesosClient</module>
-    <module>SingularityClient</module>
-    <module>SingularityExecutor</module>
-    <module>SingularityExecutorCleanup</module>
-    <module>SingularityLogWatcher</module>
-    <module>SingularityS3Uploader</module>
-    <module>SingularityS3Downloader</module>
-    <module>SingularityOOMKiller</module>
     <module>SingularitySwagger</module>
     <module>EmbedSingularityExample</module>
   </modules>
@@ -109,43 +100,13 @@
 
       <dependency>
         <groupId>com.hubspot</groupId>
-        <artifactId>SingularityRunnerBase</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.hubspot</groupId>
-        <artifactId>SingularityS3Base</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.hubspot</groupId>
         <artifactId>SingularityMesosClient</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>com.hubspot</groupId>
-        <artifactId>SingularityClient</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.hubspot</groupId>
         <artifactId>SingularityService</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.hubspot</groupId>
-        <artifactId>SingularityExecutor</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.hubspot</groupId>
-        <artifactId>SingularityExecutorCleanup</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -328,12 +289,6 @@
       </dependency>
 
       <dependency>
-        <groupId>com.github.jknack</groupId>
-        <artifactId>handlebars</artifactId>
-        <version>1.3.1</version>
-      </dependency>
-
-      <dependency>
         <groupId>org.apache.mesos</groupId>
         <artifactId>mesos</artifactId>
         <version>${mesos.version}</version>
@@ -361,12 +316,6 @@
             <artifactId>commons-logging</artifactId>
           </exclusion>
         </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-continuation</artifactId>
-        <version>${dep.jetty.version}</version>
       </dependency>
 
       <dependency>
@@ -516,12 +465,6 @@
         <groupId>org.quartz-scheduler</groupId>
         <artifactId>quartz</artifactId>
         <version>2.2.1</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.fluentd</groupId>
-        <artifactId>fluent-logger</artifactId>
-        <version>0.2.11</version>
       </dependency>
 
       <dependency>
