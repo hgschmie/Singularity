@@ -112,17 +112,11 @@ public class SingularityConfiguration extends Configuration {
 
   private long persistHistoryEverySeconds = TimeUnit.HOURS.toSeconds(1);
 
-  @JsonProperty("s3")
-  private S3Configuration s3Configuration;
-
   private boolean sandboxDefaultsToTaskId = false;
 
   private long sandboxHttpTimeoutMillis = TimeUnit.SECONDS.toMillis(5);
 
   private long saveStateEverySeconds = 60;
-
-  @JsonProperty("sentry")
-  private SentryConfiguration sentryConfiguration;
 
   @JsonProperty("smtp")
   private SMTPConfiguration smtpConfiguration;
@@ -316,20 +310,12 @@ public class SingularityConfiguration extends Configuration {
     return persistHistoryEverySeconds;
   }
 
-  public Optional<S3Configuration> getS3Configuration() {
-    return Optional.fromNullable(s3Configuration);
-  }
-
   public long getSandboxHttpTimeoutMillis() {
     return sandboxHttpTimeoutMillis;
   }
 
   public long getSaveStateEverySeconds() {
     return saveStateEverySeconds;
-  }
-
-  public Optional<SentryConfiguration> getSentryConfiguration(){
-    return Optional.fromNullable(sentryConfiguration);
   }
 
   public Optional<SMTPConfiguration> getSmtpConfiguration() {
@@ -576,10 +562,6 @@ public class SingularityConfiguration extends Configuration {
     this.persistHistoryEverySeconds = persistHistoryEverySeconds;
   }
 
-  public void setS3Configuration(S3Configuration s3Configuration) {
-    this.s3Configuration = s3Configuration;
-  }
-
   public void setSandboxDefaultsToTaskId(boolean sandboxDefaultsToTaskId) {
     this.sandboxDefaultsToTaskId = sandboxDefaultsToTaskId;
   }
@@ -590,10 +572,6 @@ public class SingularityConfiguration extends Configuration {
 
   public void setSaveStateEverySeconds(long saveStateEverySeconds) {
     this.saveStateEverySeconds = saveStateEverySeconds;
-  }
-
-  public void setSentryConfiguration(SentryConfiguration sentryConfiguration){
-    this.sentryConfiguration = sentryConfiguration;
   }
 
   public void setSmtpConfiguration(SMTPConfiguration smtpConfiguration) {

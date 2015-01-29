@@ -36,7 +36,6 @@ import com.hubspot.singularity.data.SlaveManager;
 import com.hubspot.singularity.data.TaskManager;
 import com.hubspot.singularity.data.transcoders.IdTranscoder;
 import com.hubspot.singularity.scheduler.SingularitySchedulerStateCache;
-import com.hubspot.singularity.sentry.SingularityExceptionNotifier;
 
 @Singleton
 class SingularitySlaveAndRackManager extends SingularitySchedulerParticipant {
@@ -48,7 +47,6 @@ class SingularitySlaveAndRackManager extends SingularitySchedulerParticipant {
 
   private final SingularityConfiguration configuration;
 
-  private final SingularityExceptionNotifier exceptionNotifier;
   private final RackManager rackManager;
   private final SlaveManager slaveManager;
   private final TaskManager taskManager;
@@ -56,13 +54,12 @@ class SingularitySlaveAndRackManager extends SingularitySchedulerParticipant {
   private final IdTranscoder<SingularityTaskId> taskIdTranscoder;
 
   @Inject
-  SingularitySlaveAndRackManager(SingularityConfiguration configuration, SingularityExceptionNotifier exceptionNotifier, RackManager rackManager, SlaveManager slaveManager, TaskManager taskManager,
+  SingularitySlaveAndRackManager(SingularityConfiguration configuration, RackManager rackManager, SlaveManager slaveManager, TaskManager taskManager,
       final IdTranscoder<SingularityTaskId> taskIdTranscoder, Provider<SingularitySchedulerStateCache> stateCacheProvider) {
     this.configuration = configuration;
 
     MesosConfiguration mesosConfiguration = configuration.getMesosConfiguration();
 
-    this.exceptionNotifier = exceptionNotifier;
     this.rackIdAttributeKey = mesosConfiguration.getRackIdAttributeKey();
     this.defaultRackId = mesosConfiguration.getDefaultRackId();
 
@@ -364,7 +361,6 @@ class SingularitySlaveAndRackManager extends SingularitySchedulerParticipant {
     if (!slave.isPresent()) {
       final String message = String.format("Couldn't find slave with id %s for task %s", slaveId, taskId);
       LOG.warn(message);
-      exceptionNotifier.notify(message);
       return;
     }
 
@@ -379,7 +375,6 @@ class SingularitySlaveAndRackManager extends SingularitySchedulerParticipant {
     if (!rack.isPresent()) {
       final String message = String.format("Couldn't find rack with id %s for task %s", taskId.getRackId(), taskId);
       LOG.warn(message);
-      exceptionNotifier.notify(message);
       return;
     }
 

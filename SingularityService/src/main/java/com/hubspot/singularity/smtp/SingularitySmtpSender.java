@@ -27,7 +27,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.hubspot.mesos.JavaUtils;
 import com.hubspot.singularity.config.SMTPConfiguration;
-import com.hubspot.singularity.sentry.SingularityExceptionNotifier;
 
 @Singleton
 public class SingularitySmtpSender implements Managed {
@@ -36,12 +35,10 @@ public class SingularitySmtpSender implements Managed {
 
   private final Optional<SMTPConfiguration> maybeSmtpConfiguration;
   private final Optional<ThreadPoolExecutor> mailSenderExecutorService;
-  private final SingularityExceptionNotifier exceptionNotifier;
 
   @Inject
-  public SingularitySmtpSender(Optional<SMTPConfiguration> maybeSmtpConfiguration, SingularityExceptionNotifier exceptionNotifier) {
+  public SingularitySmtpSender(Optional<SMTPConfiguration> maybeSmtpConfiguration) {
     this.maybeSmtpConfiguration = maybeSmtpConfiguration;
-    this.exceptionNotifier = exceptionNotifier;
 
     if (maybeSmtpConfiguration.isPresent()) {
       this.mailSenderExecutorService = Optional.of(JavaUtils.newFixedTimingOutThreadPool(maybeSmtpConfiguration.get().getMailMaxThreads(), TimeUnit.SECONDS.toMillis(1), "SingularitySMTPSender-%d"));
@@ -136,7 +133,6 @@ public class SingularitySmtpSender implements Managed {
       Transport.send(message);
     } catch (Throwable t) {
       LOG.warn("Unable to send message {}", getEmailLogFormat(toList, subject), t);
-      exceptionNotifier.notify(t);
     }
   }
 

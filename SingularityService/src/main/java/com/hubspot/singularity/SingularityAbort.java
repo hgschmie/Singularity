@@ -25,7 +25,6 @@ import com.hubspot.singularity.config.EmailConfigurationEnums.EmailDestination;
 import com.hubspot.singularity.config.EmailConfigurationEnums.EmailType;
 import com.hubspot.singularity.config.SMTPConfiguration;
 import com.hubspot.singularity.config.SingularityConfiguration;
-import com.hubspot.singularity.sentry.SingularityExceptionNotifier;
 import com.hubspot.singularity.smtp.SingularitySmtpSender;
 
 @Singleton
@@ -36,17 +35,15 @@ public class SingularityAbort implements ConnectionStateListener {
   private final Optional<SMTPConfiguration> maybeSmtpConfiguration;
   private final SingularitySmtpSender smtpSender;
   private final HostAndPort hostAndPort;
-  private final SingularityExceptionNotifier exceptionNotifier;
 
   private final ServerProvider serverProvider;
   private final AtomicBoolean aborting = new AtomicBoolean();
 
   @Inject
-  public SingularityAbort(SingularitySmtpSender smtpSender, ServerProvider serverProvider, SingularityConfiguration configuration, SingularityExceptionNotifier exceptionNotifier, @Named(SingularityMainModule.HTTP_HOST_AND_PORT) HostAndPort hostAndPort) {
+  public SingularityAbort(SingularitySmtpSender smtpSender, ServerProvider serverProvider, SingularityConfiguration configuration, @Named(SingularityMainModule.HTTP_HOST_AND_PORT) HostAndPort hostAndPort) {
     this.maybeSmtpConfiguration = configuration.getSmtpConfiguration();
     this.serverProvider = serverProvider;
     this.smtpSender = smtpSender;
-    this.exceptionNotifier = exceptionNotifier;
     this.hostAndPort = hostAndPort;
   }
 
@@ -95,8 +92,6 @@ public class SingularityAbort implements ConnectionStateListener {
     LOG.error(message);
 
     sendAbortMail(message);
-
-    exceptionNotifier.notify(message);
   }
 
   private void sendAbortMail(final String message) {

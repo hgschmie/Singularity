@@ -9,8 +9,6 @@ import io.dropwizard.lifecycle.Managed;
 
 import java.util.Set;
 
-import net.kencochrane.raven.Raven;
-
 import org.apache.curator.test.TestingServer;
 import org.apache.mesos.Protos.MasterInfo;
 import org.apache.mesos.Protos.Status;
@@ -34,7 +32,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Stage;
-import com.google.inject.TypeLiteral;
 import com.google.inject.util.Modules;
 import com.hubspot.jackson.datatype.protobuf.ProtobufModule;
 import com.hubspot.mesos.client.SingularityMesosClientModule;
@@ -43,7 +40,6 @@ import com.hubspot.singularity.SingularityMainModule;
 import com.hubspot.singularity.SingularityTaskId;
 import com.hubspot.singularity.config.MesosConfiguration;
 import com.hubspot.singularity.config.SMTPConfiguration;
-import com.hubspot.singularity.config.SentryConfiguration;
 import com.hubspot.singularity.config.SingularityConfiguration;
 import com.hubspot.singularity.config.ZooKeeperConfiguration;
 import com.hubspot.singularity.data.SingularityDataModule;
@@ -60,7 +56,6 @@ import com.hubspot.singularity.resources.DeployResource;
 import com.hubspot.singularity.resources.RackResource;
 import com.hubspot.singularity.resources.RequestResource;
 import com.hubspot.singularity.resources.SlaveResource;
-import com.hubspot.singularity.sentry.SingularityExceptionNotifier;
 import com.hubspot.singularity.smtp.SingularityMailer;
 
 public class SingularityTestModule implements Module {
@@ -113,8 +108,6 @@ public class SingularityTestModule implements Module {
 
           @Override
           public void configure(Binder binder) {
-            binder.bind(SingularityExceptionNotifier.class).toInstance(mock(SingularityExceptionNotifier.class));
-
             SingularityAbort abort = mock(SingularityAbort.class);
             SingularityMailer mailer = mock(SingularityMailer.class);
 
@@ -127,9 +120,6 @@ public class SingularityTestModule implements Module {
                 .registerModule(new ProtobufModule()));
 
             binder.bind(HostAndPort.class).annotatedWith(named(HTTP_HOST_AND_PORT)).toInstance(HostAndPort.fromString("localhost:8080"));
-
-            binder.bind(new TypeLiteral<Optional<Raven>>() {}).toInstance(Optional.<Raven> absent());
-            binder.bind(new TypeLiteral<Optional<SentryConfiguration>>() {}).toInstance(Optional.<SentryConfiguration> absent());
           }
         }));
 

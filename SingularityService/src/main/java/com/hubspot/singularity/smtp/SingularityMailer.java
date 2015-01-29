@@ -2,7 +2,6 @@ package com.hubspot.singularity.smtp;
 
 import io.dropwizard.lifecycle.Managed;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +37,6 @@ import com.hubspot.singularity.config.SMTPConfiguration;
 import com.hubspot.singularity.config.SingularityConfiguration;
 import com.hubspot.singularity.data.MetadataManager;
 import com.hubspot.singularity.data.TaskManager;
-import com.hubspot.singularity.sentry.SingularityExceptionNotifier;
 
 import de.neuland.jade4j.Jade4J;
 import de.neuland.jade4j.template.JadeTemplate;
@@ -51,7 +49,6 @@ public class SingularityMailer implements Managed {
   private final SingularityConfiguration configuration;
   private final Optional<SMTPConfiguration> maybeSmtpConfiguration;
   private final Optional<ThreadPoolExecutor> mailPreparerExecutorService;
-  private final SingularityExceptionNotifier exceptionNotifier;
 
   private final TaskManager taskManager;
 
@@ -71,7 +68,6 @@ public class SingularityMailer implements Managed {
       SingularityConfiguration configuration,
       TaskManager taskManager,
       MetadataManager metadataManager,
-      SingularityExceptionNotifier exceptionNotifier,
       MailTemplateHelpers mailTemplateHelpers,
       @Named(SingularityMainModule.TASK_TEMPLATE) JadeTemplate taskTemplate,
       @Named(SingularityMainModule.REQUEST_IN_COOLDOWN_TEMPLATE) JadeTemplate requestInCooldownTemplate,
@@ -83,7 +79,6 @@ public class SingularityMailer implements Managed {
     this.configuration = configuration;
     this.taskManager = taskManager;
     this.metadataManager = metadataManager;
-    this.exceptionNotifier = exceptionNotifier;
     this.adminJoiner = Joiner.on(", ").skipNulls();
 
     this.mailTemplateHelpers = mailTemplateHelpers;
@@ -236,7 +231,6 @@ public class SingularityMailer implements Managed {
           prepareTaskCompletedMail(task, taskId, request, taskState);
         } catch (Throwable t) {
           LOG.error("While preparing task completed mail for {}", taskId, t);
-          exceptionNotifier.notify(t);
         }
       }
     });
@@ -319,7 +313,6 @@ public class SingularityMailer implements Managed {
           prepareRequestMail(request, type, user);
         } catch (Throwable t) {
           LOG.error("While preparing request mail for {} / {}", request, type, t);
-          exceptionNotifier.notify(t);
         }
       }
     });
@@ -377,7 +370,6 @@ public class SingularityMailer implements Managed {
           prepareRequestInCooldownMail(request);
         } catch (Throwable t) {
           LOG.error("While preparing request in cooldown mail for {}", request, t);
-          exceptionNotifier.notify(t);
         }
       }
     });

@@ -85,7 +85,7 @@
       <artifactId>slf4j-api</artifactId>
     </dependency>
 
-    <!-- for jade and jets3t -->
+    <!-- for jade -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>jcl-over-slf4j</artifactId>
@@ -296,18 +296,8 @@
     </dependency>
 
     <dependency>
-      <groupId>net.kencochrane.raven</groupId>
-      <artifactId>raven</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>org.iq80.snappy</groupId>
       <artifactId>snappy</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>net.java.dev.jets3t</groupId>
-      <artifactId>jets3t</artifactId>
     </dependency>
 
     <dependency>

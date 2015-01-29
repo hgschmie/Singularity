@@ -31,7 +31,6 @@ import com.hubspot.singularity.SingularityTaskStatusHolder;
 import com.hubspot.singularity.config.SingularityConfiguration;
 import com.hubspot.singularity.data.TaskManager;
 import com.hubspot.singularity.mesos.SchedulerDriverSupplier;
-import com.hubspot.singularity.sentry.SingularityExceptionNotifier;
 
 @Singleton
 public class SingularityTaskReconciliation {
@@ -44,12 +43,10 @@ public class SingularityTaskReconciliation {
   private final AtomicBoolean isRunningReconciliation;
   private final SingularityConfiguration configuration;
   private final SingularityAbort abort;
-  private final SingularityExceptionNotifier exceptionNotifier;
   private final SchedulerDriverSupplier schedulerDriverSupplier;
 
   @Inject
   public SingularityTaskReconciliation(@Named(SingularityMainModule.CORE_THREADPOOL_NAME) ScheduledExecutorService executorService,
-      SingularityExceptionNotifier exceptionNotifier,
       TaskManager taskManager,
       SingularityConfiguration configuration,
       @Named(SingularityMainModule.SERVER_ID_PROPERTY) String serverId,
@@ -58,7 +55,6 @@ public class SingularityTaskReconciliation {
     this.taskManager = taskManager;
     this.serverId = serverId;
 
-    this.exceptionNotifier = exceptionNotifier;
     this.configuration = configuration;
     this.abort = abort;
     this.schedulerDriverSupplier = schedulerDriverSupplier;
@@ -114,7 +110,6 @@ public class SingularityTaskReconciliation {
           checkReconciliation(driver, reconciliationStart, remainingTaskIds, numTimes + 1);
         } catch (Throwable t) {
           LOG.error("While checking for reconciliation tasks", t);
-          exceptionNotifier.notify(t);
           abort.abort(AbortReason.UNRECOVERABLE_ERROR);
         }
       }

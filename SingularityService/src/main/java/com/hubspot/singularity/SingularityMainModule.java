@@ -21,10 +21,6 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.LeaderLatch;
 import org.apache.curator.framework.recipes.leader.LeaderLatchListener;
 import org.apache.curator.framework.state.ConnectionStateListener;
-import org.jets3t.service.S3Service;
-import org.jets3t.service.S3ServiceException;
-import org.jets3t.service.impl.rest.httpclient.RestS3Service;
-import org.jets3t.service.security.AWSCredentials;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
@@ -42,17 +38,12 @@ import com.google.inject.name.Names;
 import com.hubspot.mesos.JavaUtils;
 import com.hubspot.mesos.client.MesosClient;
 import com.hubspot.singularity.config.MesosConfiguration;
-import com.hubspot.singularity.config.S3Configuration;
 import com.hubspot.singularity.config.SMTPConfiguration;
-import com.hubspot.singularity.config.SentryConfiguration;
 import com.hubspot.singularity.config.SingularityConfiguration;
 import com.hubspot.singularity.config.ZooKeeperConfiguration;
 import com.hubspot.singularity.guice.DropwizardObjectMapperProvider;
 import com.hubspot.singularity.hooks.SingularityWebhookPoller;
 import com.hubspot.singularity.hooks.SingularityWebhookSender;
-import com.hubspot.singularity.sentry.NotifyingExceptionMapper;
-import com.hubspot.singularity.sentry.SingularityExceptionNotifier;
-import com.hubspot.singularity.sentry.SingularityExceptionNotifierManaged;
 import com.hubspot.singularity.smtp.JadeTemplateLoader;
 import com.hubspot.singularity.smtp.MailTemplateHelpers;
 import com.hubspot.singularity.smtp.SingularityMailRecordCleaner;
@@ -112,17 +103,13 @@ public class SingularityMainModule implements Module {
     binder.bind(SingularityMailer.class).in(Scopes.SINGLETON);
     binder.bind(SingularitySmtpSender.class).in(Scopes.SINGLETON);
     binder.bind(MailTemplateHelpers.class).in(Scopes.SINGLETON);
-    binder.bind(SingularityExceptionNotifier.class).in(Scopes.SINGLETON);
     binder.bind(SingularityMailRecordCleaner.class).in(Scopes.SINGLETON);
     binder.bind(SingularityWebhookPoller.class).in(Scopes.SINGLETON);
 
     binder.bind(MesosClient.class).in(Scopes.SINGLETON);
 
     binder.bind(SingularityAbort.class).in(Scopes.SINGLETON);
-    binder.bind(SingularityExceptionNotifierManaged.class).in(Scopes.SINGLETON);
     binder.bind(SingularityWebhookSender.class).in(Scopes.SINGLETON);
-
-    binder.bind(NotifyingExceptionMapper.class).in(Scopes.SINGLETON);
 
     binder.bind(ObjectMapper.class).toProvider(DropwizardObjectMapperProvider.class).in(Scopes.SINGLETON);
 
@@ -193,22 +180,6 @@ public class SingularityMainModule implements Module {
 
   @Provides
   @Singleton
-  public Optional<SentryConfiguration> sentryConfiguration(final SingularityConfiguration config) {
-    return config.getSentryConfiguration();
-  }
-
-  @Provides
-  @Singleton
-  public Optional<S3Service> s3Service(Optional<S3Configuration> config) throws S3ServiceException {
-    if (!config.isPresent()) {
-      return Optional.absent();
-    }
-
-    return Optional.<S3Service>of(new RestS3Service(new AWSCredentials(config.get().getS3AccessKey(), config.get().getS3SecretKey())));
-  }
-
-  @Provides
-  @Singleton
   public MesosConfiguration mesosConfiguration(final SingularityConfiguration config) {
     return config.getMesosConfiguration();
   }
@@ -217,12 +188,6 @@ public class SingularityMainModule implements Module {
   @Singleton
   public Optional<SMTPConfiguration> smtpConfiguration(final SingularityConfiguration config) {
     return config.getSmtpConfiguration();
-  }
-
-  @Provides
-  @Singleton
-  public Optional<S3Configuration> s3Configuration(final SingularityConfiguration config) {
-    return config.getS3Configuration();
   }
 
   private JadeTemplate getJadeTemplate(String name) throws IOException {
