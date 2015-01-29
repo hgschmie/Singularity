@@ -18,7 +18,6 @@ import org.apache.mesos.Protos.TaskStatus;
 import org.apache.mesos.Protos.Value.Scalar;
 import org.apache.mesos.Protos.Value.Type;
 import org.apache.mesos.SchedulerDriver;
-import org.junit.After;
 import org.junit.Before;
 
 import com.google.common.base.Optional;
@@ -47,7 +46,6 @@ import com.hubspot.singularity.scheduler.SingularitySchedulerPriority;
 import com.hubspot.singularity.scheduler.SingularitySchedulerStateCache;
 import com.hubspot.singularity.scheduler.SingularityTaskReconciliation;
 import com.hubspot.singularity.smtp.SingularityMailer;
-import com.ning.http.client.AsyncHttpClient;
 
 public class SingularitySchedulerTestBase extends SingularityCuratorTestBase {
 
@@ -73,8 +71,6 @@ public class SingularitySchedulerTestBase extends SingularityCuratorTestBase {
   protected SingularityConfiguration configuration;
   @Inject
   protected SingularityCooldownChecker cooldownChecker;
-  @Inject
-  protected AsyncHttpClient httpClient;
   @Inject
   protected SingularitySchedulerPriority schedulerPriority;
   @Inject
@@ -108,13 +104,6 @@ public class SingularitySchedulerTestBase extends SingularityCuratorTestBase {
   @Before
   public void startUp() throws Exception {
     mesosScheduler.setRunning();
-  }
-
-  @After
-  public void teardown() throws Exception {
-    if (httpClient != null) {
-      httpClient.close();
-    }
   }
 
   protected SchedulerDriver getSchedulerDriver() {

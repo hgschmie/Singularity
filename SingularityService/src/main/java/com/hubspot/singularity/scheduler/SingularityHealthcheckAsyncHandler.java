@@ -1,9 +1,18 @@
 package com.hubspot.singularity.scheduler;
 
+import static java.lang.String.format;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.CharStreams;
 import com.hubspot.singularity.SingularityAbort;
 import com.hubspot.singularity.SingularityAbort.AbortReason;
 import com.hubspot.singularity.SingularityTask;
@@ -11,10 +20,12 @@ import com.hubspot.singularity.SingularityTaskHealthcheckResult;
 import com.hubspot.singularity.config.SingularityConfiguration;
 import com.hubspot.singularity.data.TaskManager;
 import com.hubspot.singularity.sentry.SingularityExceptionNotifier;
-import com.ning.http.client.AsyncCompletionHandler;
-import com.ning.http.client.Response;
+import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ResponseBody;
 
-public class SingularityHealthcheckAsyncHandler extends AsyncCompletionHandler<Response> {
+public class SingularityHealthcheckAsyncHandler implements Callback {
 
   private static final Logger LOG = LoggerFactory.getLogger(SingularityHealthchecker.class);
 
@@ -40,23 +51,24 @@ public class SingularityHealthcheckAsyncHandler extends AsyncCompletionHandler<R
   }
 
   @Override
-  public Response onCompleted(Response response) throws Exception {
+  public void onResponse(Response response) throws IOException {
     Optional<String> responseBody = Optional.absent();
 
-    if (response.hasResponseBody()) {
-      responseBody = Optional.of(response.getResponseBodyExcerpt(maxHealthcheckResponseBodyBytes));
+    try (ResponseBody body = response.body();
+        Reader reader = new InputStreamReader(ByteStreams.limit(body.byteStream(), maxHealthcheckResponseBodyBytes), StandardCharsets.UTF_8)) {
+      String result = CharStreams.toString(reader);
+      responseBody = Optional.of(result);
+      LOG.trace(format("Webhook response message is: '%s'", result));
     }
 
-    saveResult(Optional.of(response.getStatusCode()), responseBody, Optional.<String> absent());
-
-    return response;
+    saveResult(Optional.of(response.code()), responseBody, Optional.<String> absent());
   }
 
   @Override
-  public void onThrowable(Throwable t) {
-    LOG.trace("Exception while making health check for task {}", task.getTaskId(), t);
+  public void onFailure(Request request, IOException e) {
+    LOG.trace(format("Exception while making health check for task %s", task.getTaskId()), e);
 
-    saveResult(Optional.<Integer> absent(), Optional.<String> absent(), Optional.of(String.format("Healthcheck failed due to exception: %s", t.getMessage())));
+    saveResult(Optional.<Integer> absent(), Optional.<String> absent(), Optional.of(format("Healthcheck failed due to exception: %s", e.getMessage())));
   }
 
   public void saveResult(Optional<Integer> statusCode, Optional<String> responseBody, Optional<String> errorMessage) {

@@ -1,5 +1,7 @@
 package com.hubspot.singularity.scheduler;
 
+import static java.lang.String.format;
+
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -22,17 +24,15 @@ import com.hubspot.singularity.SingularityTask;
 import com.hubspot.singularity.config.SingularityConfiguration;
 import com.hubspot.singularity.data.TaskManager;
 import com.hubspot.singularity.sentry.SingularityExceptionNotifier;
-import com.ning.http.client.AsyncHttpClient;
-import com.ning.http.client.PerRequestConfig;
-import com.ning.http.client.RequestBuilder;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
 
-@SuppressWarnings("deprecation")
 @Singleton
 public class SingularityHealthchecker {
 
   private static final Logger LOG = LoggerFactory.getLogger(SingularityHealthchecker.class);
 
-  private final AsyncHttpClient http;
+  private final OkHttpClient httpClient;
   private final SingularityConfiguration configuration;
   private final TaskManager taskManager;
   private final SingularityAbort abort;
@@ -46,9 +46,9 @@ public class SingularityHealthchecker {
 
   @Inject
   public SingularityHealthchecker(@Named(SingularityMainModule.HEALTHCHECK_THREADPOOL_NAME) ScheduledExecutorService executorService,
-      AsyncHttpClient http, SingularityConfiguration configuration, SingularityNewTaskChecker newTaskChecker,
+      OkHttpClient httpClient, SingularityConfiguration configuration, SingularityNewTaskChecker newTaskChecker,
       TaskManager taskManager, SingularityAbort abort, SingularityExceptionNotifier exceptionNotifier) {
-    this.http = http;
+    this.httpClient = httpClient;
     this.configuration = configuration;
     this.newTaskChecker = newTaskChecker;
     this.taskManager = taskManager;
@@ -161,25 +161,17 @@ public class SingularityHealthchecker {
       return;
     }
 
-    final Long timeoutSeconds = task.getTaskRequest().getDeploy().getHealthcheckTimeoutSeconds().or(configuration.getHealthcheckTimeoutSeconds());
+    final long timeoutSeconds = task.getTaskRequest().getDeploy().getHealthcheckTimeoutSeconds().or(configuration.getHealthcheckTimeoutSeconds());
 
-    try {
-      PerRequestConfig prc = new PerRequestConfig();
-      prc.setRequestTimeoutInMs((int) TimeUnit.SECONDS.toMillis(timeoutSeconds));
+    OkHttpClient healthcheckClient = httpClient.clone();
+    healthcheckClient.setConnectTimeout(timeoutSeconds, TimeUnit.SECONDS);
+    healthcheckClient.setReadTimeout(timeoutSeconds, TimeUnit.SECONDS);
+    healthcheckClient.setWriteTimeout(timeoutSeconds, TimeUnit.SECONDS);
+    healthcheckClient.setFollowRedirects(true);
 
-      RequestBuilder builder = new RequestBuilder("GET");
-      builder.setFollowRedirects(true);
-      builder.setUrl(uri.get());
-      builder.setPerRequestConfig(prc);
+    Request req = new Request.Builder().get().url(uri.get()).build();
 
-      LOG.trace("Issuing a healthcheck ({}) for task {} with timeout {}s", uri.get(), task.getTaskId(), timeoutSeconds);
-
-      http.prepareRequest(builder.build()).execute(handler);
-    } catch (Throwable t) {
-      LOG.debug("Exception while preparing healthcheck ({}) for task ({})", uri, task.getTaskId(), t);
-      exceptionNotifier.notify(t);
-      saveFailure(handler, String.format("Healthcheck failed due to exception: %s", t.getMessage()));
-    }
+    LOG.trace(format("Issuing a healthcheck (%s) for task %s with timeout %ds", uri.get(), task.getTaskId(), timeoutSeconds));
+    httpClient.newCall(req).enqueue(handler);
   }
-
 }

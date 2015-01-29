@@ -1,14 +1,18 @@
 package com.hubspot.singularity.hooks;
 
+import java.io.IOException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hubspot.mesos.JavaUtils;
 import com.hubspot.singularity.SingularityWebhook;
-import com.ning.http.client.AsyncCompletionHandler;
-import com.ning.http.client.Response;
+import com.squareup.okhttp.Callback;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ResponseBody;
 
-public abstract class AbstractSingularityWebhookAsyncHandler<T> extends AsyncCompletionHandler<Response>  {
+public abstract class AbstractSingularityWebhookAsyncHandler<T> implements Callback  {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractSingularityWebhookAsyncHandler.class);
 
@@ -26,8 +30,8 @@ public abstract class AbstractSingularityWebhookAsyncHandler<T> extends AsyncCom
   }
 
   @Override
-  public void onThrowable(Throwable t) {
-    LOG.trace("Webhook {} for {} failed after {}", webhook.getUri(), update, JavaUtils.duration(start), t);
+  public void onFailure(Request req, IOException e) {
+    LOG.trace("Webhook {} for {} failed after {}", webhook.getUri(), update, JavaUtils.duration(start), e);
 
     if (shouldDeleteUpdateDueToQueueAboveCapacity) {
       deleteWebhookUpdate();
@@ -39,20 +43,18 @@ public abstract class AbstractSingularityWebhookAsyncHandler<T> extends AsyncCom
   }
 
   @Override
-  public Response onCompleted(Response response) throws Exception {
-    LOG.trace("Webhook {} for {} completed with {} after {}", webhook.getUri(), update, response.getStatusCode(), JavaUtils.duration(start));
+  public void onResponse (Response response) throws IOException {
+    LOG.trace("Webhook {} for {} completed with {} after {}", webhook.getUri(), update, response.code(), JavaUtils.duration(start));
 
-    if (response.hasResponseBody()) {
-      LOG.trace("Webhook response message is: '{}'", response.getResponseBody());
+    try (ResponseBody body = response.body()) {
+      String result = body.string();
+      LOG.trace("Webhook response message is: '{}'", result);
     }
 
-    if (JavaUtils.isHttpSuccess(response.getStatusCode()) || shouldDeleteUpdateDueToQueueAboveCapacity) {
+    if (response.isSuccessful() || shouldDeleteUpdateDueToQueueAboveCapacity) {
       deleteWebhookUpdate();
     }
-
-    return response;
   }
 
   public abstract void deleteWebhookUpdate();
-
 }

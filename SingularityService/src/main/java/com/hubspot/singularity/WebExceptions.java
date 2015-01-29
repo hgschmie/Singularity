@@ -5,11 +5,61 @@ import static java.lang.String.format;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.Response.Status.Family;
+import javax.ws.rs.core.Response.StatusType;
 
 import com.sun.jersey.api.ConflictException;
 import com.sun.jersey.api.NotFoundException;
 
 public final class WebExceptions {
+
+  public static enum WebStatusCode implements StatusType {
+    TIMEOUT(408, "Request timeout");
+
+    private final int statusCode;
+    private final String reasonPhrase;
+    private final Family family;
+
+    private WebStatusCode(final int statusCode, final String reasonPhrase) {
+      this.statusCode = statusCode;
+      this.reasonPhrase = reasonPhrase;
+      switch (statusCode / 100) {
+      case 1:
+        this.family = Family.INFORMATIONAL;
+        break;
+      case 2:
+        this.family = Family.SUCCESSFUL;
+        break;
+      case 3:
+        this.family = Family.REDIRECTION;
+        break;
+      case 4:
+        this.family = Family.CLIENT_ERROR;
+        break;
+      case 5:
+        this.family = Family.SERVER_ERROR;
+        break;
+      default:
+        this.family = Family.OTHER;
+        break;
+      }
+    }
+
+    @Override
+    public int getStatusCode() {
+      return statusCode;
+    }
+
+    @Override
+    public Family getFamily() {
+      return family;
+    }
+
+    @Override
+    public String getReasonPhrase() {
+      return reasonPhrase;
+    }
+  }
 
   private WebExceptions() {
   }
@@ -46,11 +96,11 @@ public final class WebExceptions {
   }
 
   public static WebApplicationException badRequest(String message, Object... args) {
-    throw webException(Status.BAD_REQUEST.getStatusCode(), message, args);
+    throw webException(Status.BAD_REQUEST, message, args);
   }
 
   public static WebApplicationException timeout(String message, Object... args) {
-    throw webException(408, message, args);
+    throw webException(WebStatusCode.TIMEOUT, message, args);
   }
 
   public static WebApplicationException conflict(String message, Object... args) {
@@ -67,11 +117,18 @@ public final class WebExceptions {
     throw new NotFoundException(message);
   }
 
-  public static WebApplicationException forbidden(String message, Object... args) {
-    return webException(Status.FORBIDDEN.getStatusCode(), message, args);
+  public static WebApplicationException serverError(Throwable t, String message, Object... args) {
+    if (args.length > 0) {
+      message = format(message, args);
+    }
+    throw webException(t, Status.INTERNAL_SERVER_ERROR, message, args);
   }
 
-  private static WebApplicationException webException(int statusCode, String message, Object... formatArgs) {
+  public static WebApplicationException forbidden(String message, Object... args) {
+    return webException(Status.FORBIDDEN, message, args);
+  }
+
+  private static WebApplicationException webException(StatusType statusCode, String message, Object... formatArgs) {
     if (formatArgs.length > 0) {
       message = format(message, formatArgs);
     }
@@ -79,4 +136,11 @@ public final class WebExceptions {
     throw new WebApplicationException(Response.status(statusCode).entity(message).type("text/plain").build());
   }
 
+  private static WebApplicationException webException(Throwable t, StatusType statusCode, String message, Object... formatArgs) {
+    if (formatArgs.length > 0) {
+      message = format(message, formatArgs);
+    }
+
+    throw new WebApplicationException(t, Response.status(statusCode).entity(message).type("text/plain").build());
+  }
 }

@@ -2,6 +2,7 @@ package com.hubspot.singularity.smtp;
 
 import io.dropwizard.lifecycle.Managed;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -131,7 +132,7 @@ public class SingularityMailer implements Managed {
 
     try {
       logChunkObject = sandboxManager.read(slaveHostname, fullPath, Optional.of(0L), Optional.of(logLength));
-    } catch (RuntimeException e) {
+    } catch (IOException e) {
       LOG.error("Sandboxmanager failed to read {}/{} on slave {}", directory.get(), filename, slaveHostname, e);
       return Optional.absent();
     }

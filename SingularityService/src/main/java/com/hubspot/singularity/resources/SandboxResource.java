@@ -2,9 +2,10 @@ package com.hubspot.singularity.resources;
 
 import static com.hubspot.singularity.WebExceptions.badRequest;
 import static com.hubspot.singularity.WebExceptions.checkNotFound;
-import static com.hubspot.singularity.WebExceptions.notFound;
+import static com.hubspot.singularity.WebExceptions.serverError;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -34,7 +35,6 @@ import com.hubspot.singularity.SingularityTaskId;
 import com.hubspot.singularity.config.SingularityConfiguration;
 import com.hubspot.singularity.data.DeployManager;
 import com.hubspot.singularity.data.SandboxManager;
-import com.hubspot.singularity.data.SandboxManager.SlaveNotFoundException;
 import com.hubspot.singularity.data.TaskManager;
 import com.hubspot.singularity.data.history.HistoryManager;
 import com.hubspot.singularity.mesos.SingularityLogSupport;
@@ -113,8 +113,8 @@ public class SandboxResource extends AbstractHistoryResource {
       }));
 
       return new SingularitySandbox(sandboxFiles, pathToRoot, currentDirectory, slaveHostname);
-    } catch (SlaveNotFoundException snfe) {
-      throw notFound("Slave @ %s was not found, it is probably offline", slaveHostname);
+    } catch (IOException e) {
+      throw serverError(e,  "Problem on slave '%s'", slaveHostname);
     }
   }
 
@@ -153,8 +153,8 @@ public class SandboxResource extends AbstractHistoryResource {
       }
 
       return maybeChunk.get();
-    } catch (SlaveNotFoundException snfe) {
-      throw notFound("Slave @ %s was not found, it is probably offline", slaveHostname);
+    } catch (IOException e) {
+      throw serverError(e,  "Problem on slave '%s'", slaveHostname);
     }
   }
 
