@@ -25,7 +25,7 @@ public class SMTPConfiguration {
   private String password;
 
   @JsonProperty
-  private int taskLogLength = 512;
+  private long taskLogLength = 512;
 
   @NotNull
   @JsonProperty
@@ -89,11 +89,11 @@ public class SMTPConfiguration {
     this.emailConfiguration.putAll(emailConfiguration);
   }
 
-  public int getTaskLogLength() {
+  public long getTaskLogLength() {
     return taskLogLength;
   }
 
-  public void setTaskLogLength(int length) {
+  public void setTaskLogLength(long length) {
     taskLogLength = length;
   }
 

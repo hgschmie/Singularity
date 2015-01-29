@@ -148,11 +148,6 @@
     </dependency>
 
     <dependency>
-      <groupId>com.ning</groupId>
-      <artifactId>async-http-client</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>io.dropwizard</groupId>
       <artifactId>dropwizard-servlets</artifactId>
     </dependency>
@@ -316,6 +311,11 @@
     </dependency>
 
     <dependency>
+      <groupId>com.squareup.okhttp</groupId>
+      <artifactId>okhttp</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>annotations</artifactId>
     </dependency>
@@ -329,11 +329,6 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.hubspot</groupId>
-      <artifactId>HorizonCore</artifactId>
     </dependency>
 
     <dependency>
@@ -435,7 +430,7 @@
 
     <pluginManagement>
       <plugins>
-        <!--This plugin's configuration is used to store Eclipse m2e settings 
+        <!--This plugin's configuration is used to store Eclipse m2e settings
           only. It has no influence on the Maven build itself. -->
         <plugin>
           <groupId>org.eclipse.m2e</groupId>

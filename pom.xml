@@ -75,10 +75,8 @@
     <dropwizard.version>0.7.1</dropwizard.version>
     <jets3t.version>0.9.0</jets3t.version>
     <mesos.version>0.21.0</mesos.version>
-    <ning.async.version>1.8.12</ning.async.version>
     <snappy.version>0.3</snappy.version>
     <sentry.version>5.0</sentry.version>
-    <horizon.version>0.0.10</horizon.version>
   </properties>
 
   <modules>
@@ -312,15 +310,9 @@
       </dependency>
 
       <dependency>
-        <groupId>com.ning</groupId>
-        <artifactId>async-http-client</artifactId>
-        <version>${ning.async.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
+        <groupId>com.squareup.okhttp</groupId>
+        <artifactId>okhttp</artifactId>
+        <version>2.2.0</version>
       </dependency>
 
       <dependency>
@@ -392,24 +384,7 @@
             <artifactId>jline</artifactId>
             <groupId>jline</groupId>
           </exclusion>
-          <!-- Replaced by io.netty:netty; clashes with ning async-http-client -->
-          <exclusion>
-            <groupId>org.jboss.netty</groupId>
-            <artifactId>netty</artifactId>
-          </exclusion>
         </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>com.hubspot</groupId>
-        <artifactId>HorizonCore</artifactId>
-        <version>${horizon.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.hubspot</groupId>
-        <artifactId>HorizonNing</artifactId>
-        <version>${horizon.version}</version>
       </dependency>
 
       <dependency>

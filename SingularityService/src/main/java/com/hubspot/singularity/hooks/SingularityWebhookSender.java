@@ -1,19 +1,20 @@
 package com.hubspot.singularity.hooks;
 
+import static java.lang.String.format;
+
+import static com.google.common.net.MediaType.JSON_UTF_8;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Singleton;
-import javax.ws.rs.core.HttpHeaders;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.hubspot.mesos.JavaUtils;
 import com.hubspot.singularity.SingularityDeployUpdate;
@@ -25,24 +26,28 @@ import com.hubspot.singularity.SingularityWebhook;
 import com.hubspot.singularity.config.SingularityConfiguration;
 import com.hubspot.singularity.data.WebhookManager;
 import com.hubspot.singularity.data.history.TaskHistoryHelper;
-import com.ning.http.client.AsyncHttpClient;
-import com.ning.http.client.AsyncHttpClient.BoundRequestBuilder;
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 
 @Singleton
 public class SingularityWebhookSender {
 
   private static final Logger LOG = LoggerFactory.getLogger(SingularityWebhookSender.class);
 
+  private static final MediaType JSON_MEDIATYPE = MediaType.parse(JSON_UTF_8.toString());
+
   private final SingularityConfiguration configuration;
-  private final AsyncHttpClient http;
+  private final OkHttpClient httpClient;
   private final WebhookManager webhookManager;
   private final TaskHistoryHelper taskHistoryHelper;
   private final ObjectMapper objectMapper;
 
   @Inject
-  public SingularityWebhookSender(SingularityConfiguration configuration, AsyncHttpClient http, ObjectMapper objectMapper, TaskHistoryHelper taskHistoryHelper, WebhookManager webhookManager) {
+  public SingularityWebhookSender(SingularityConfiguration configuration, OkHttpClient httpClient, ObjectMapper objectMapper, TaskHistoryHelper taskHistoryHelper, WebhookManager webhookManager) {
     this.configuration = configuration;
-    this.http = http;
+    this.httpClient = httpClient;
     this.webhookManager = webhookManager;
     this.taskHistoryHelper = taskHistoryHelper;
     this.objectMapper = objectMapper;
@@ -77,7 +82,7 @@ public class SingularityWebhookSender {
       }
     }
 
-    LOG.info("Sent {} task, {} request, and {} deploy updates for {} webhooks in {}", taskUpdates, requestUpdates, deployUpdates, webhooks.size(), JavaUtils.duration(start));
+    LOG.info(format("Sent %d task, %d request, and %d deploy updates for %d webhooks in %s", taskUpdates, requestUpdates, deployUpdates, webhooks.size(), JavaUtils.duration(start)));
   }
 
   private boolean shouldDeleteUpdateOnFailure(int numUpdates, long updateTimestamp) {
@@ -125,7 +130,7 @@ public class SingularityWebhookSender {
 
       // TODO compress
       if (!task.isPresent()) {
-        LOG.warn("Couldn't find task for taskUpdate {}", taskUpdate);
+        LOG.warn(format("Couldn't find task for taskUpdate %s", taskUpdate));
         webhookManager.deleteTaskUpdate(webhook, taskUpdate);
         continue;
       }
@@ -138,28 +143,19 @@ public class SingularityWebhookSender {
 
   // TODO handle retries, errors.
   private <T> void executeWebhook(SingularityWebhook webhook, Object payload, AbstractSingularityWebhookAsyncHandler<T> handler) {
-    LOG.trace("Sending {} to {}", payload, webhook.getUri());
-
-    BoundRequestBuilder postRequest = http.preparePost(webhook.getUri());
-
-    postRequest.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
+    LOG.trace(format("Sending '%s' to %s", payload, webhook.getUri()));
 
     try {
-      postRequest.setBody(objectMapper.writeValueAsBytes(payload));
-    } catch (JsonProcessingException e) {
-      throw Throwables.propagate(e);
+      RequestBody requestBody = RequestBody.create(JSON_MEDIATYPE, objectMapper.writeValueAsBytes(payload));
+      Request req = new Request.Builder().post(requestBody).url(webhook.getUri()).build();
+
+      httpClient.newCall(req).enqueue(handler);
     }
-
-    try {
-      postRequest.execute(handler);
-    } catch (IOException e) {
-      LOG.warn("Couldn't execute webhook to {}", webhook.getUri(), e);
-
+    catch (IOException e) {
+      LOG.trace(format("Could not send request to %s", webhook.getUri()), e);
       if (handler.shouldDeleteUpdateDueToQueueAboveCapacity()) {
         handler.deleteWebhookUpdate();
       }
     }
   }
-
-
 }

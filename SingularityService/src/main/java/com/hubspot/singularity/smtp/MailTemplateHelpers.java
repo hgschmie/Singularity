@@ -14,11 +14,13 @@ import com.hubspot.singularity.config.EmailConfigurationEnums;
 import com.hubspot.singularity.config.SMTPConfiguration;
 import com.hubspot.singularity.config.SingularityConfiguration;
 import com.hubspot.singularity.data.SandboxManager;
+
 import org.apache.commons.lang3.text.WordUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -130,13 +132,13 @@ public class MailTemplateHelpers {
 
     final String fullPath = String.format("%s/%s", directory.get(), filename);
 
-    final Long logLength = (long) smtpConfiguration.get().getTaskLogLength();
+    final long logLength = smtpConfiguration.get().getTaskLogLength();
 
     final Optional<MesosFileChunkObject> logChunkObject;
 
     try {
       logChunkObject = sandboxManager.read(slaveHostname, fullPath, Optional.of(0L), Optional.of(logLength));
-    } catch (RuntimeException e) {
+    } catch (IOException e) {
       LOG.error("Sandboxmanager failed to read {}/{} on slave {}", directory.get(), filename, slaveHostname, e);
       return Optional.absent();
     }

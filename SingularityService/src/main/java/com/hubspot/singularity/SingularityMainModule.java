@@ -1,6 +1,5 @@
 package com.hubspot.singularity;
 
-import static com.hubspot.singularity.data.transcoders.SingularityJsonTranscoderBinder.bindTranscoder;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.inject.name.Names.named;
 
@@ -59,7 +58,7 @@ import com.hubspot.singularity.smtp.MailTemplateHelpers;
 import com.hubspot.singularity.smtp.SingularityMailRecordCleaner;
 import com.hubspot.singularity.smtp.SingularityMailer;
 import com.hubspot.singularity.smtp.SingularitySmtpSender;
-import com.ning.http.client.AsyncHttpClient;
+import com.squareup.okhttp.OkHttpClient;
 
 
 public class SingularityMainModule implements Module {
@@ -127,7 +126,6 @@ public class SingularityMainModule implements Module {
 
     binder.bind(ObjectMapper.class).toProvider(DropwizardObjectMapperProvider.class).in(Scopes.SINGLETON);
 
-    binder.bind(AsyncHttpClient.class).to(SingularityHttpClient.class).in(Scopes.SINGLETON);
     binder.bind(ServerProvider.class).in(Scopes.SINGLETON);
 
     binder.bind(SingularityDropwizardHealthcheck.class).in(Scopes.SINGLETON);
@@ -172,6 +170,12 @@ public class SingularityMainModule implements Module {
     public HostAndPort get() {
       return HostAndPort.fromParts(hostname, httpPort);
     }
+  }
+
+  @Provides
+  @Singleton
+  OkHttpClient getOkHttpClient() {
+    return new OkHttpClient();
   }
 
   @Provides
