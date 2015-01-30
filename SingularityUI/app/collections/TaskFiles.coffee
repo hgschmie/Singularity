@@ -29,10 +29,6 @@ class TaskFiles extends Collection
             httpPrefix = "http"
             httpPort = config.slaveHttpPort
             
-            if config.slaveHttpsPort
-              httpPrefix = "https"
-              httpPort = config.slaveHttpsPort
-              
             taskLogFile.downloadLink = "#{httpPrefix}://#{ sandbox.slaveHostname }:#{httpPort}/files/download.json?path=#{ taskLogFile.fullPath }"
             taskLogFile.isDirectory = taskLogFile.mode[0] is 'd'
             taskLogFile.taskId = @taskId

@@ -86,7 +86,7 @@ public class SingularityConfiguration extends Configuration {
 
   private int logFetchMaxThreads = 15;
 
-  private int maxDeployIdSize = 50;
+  private Integer maxDeployIdSize = 50;
 
   private int maxHealthcheckResponseBodyBytes = 8192;
 

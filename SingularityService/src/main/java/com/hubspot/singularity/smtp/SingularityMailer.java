@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -48,6 +49,9 @@ public class SingularityMailer implements Managed {
 
   private static final Logger LOG = LoggerFactory.getLogger(SingularityMailer.class);
 
+  private static final String TASK_LINK_FORMAT = "%s/task/%s";
+  private static final String REQUEST_LINK_FORMAT = "%s/request/%s";
+
   private final SingularitySmtpSender smtpSender;
   private final SingularityConfiguration configuration;
   private final Optional<SMTPConfiguration> maybeSmtpConfiguration;
@@ -67,8 +71,7 @@ public class SingularityMailer implements Managed {
 
   private final Joiner adminJoiner;
 
-  private static final String TASK_LINK_FORMAT = "%s/task/%s";
-  private static final String REQUEST_LINK_FORMAT = "%s/request/%s";
+  private int mesosSlavePort;
 
   @Inject
   public SingularityMailer(SingularitySmtpSender smtpSender, SingularityConfiguration configuration,
@@ -99,6 +102,8 @@ public class SingularityMailer implements Managed {
     } else {
       this.mailPreparerExecutorService = Optional.absent();
     }
+
+    this.mesosSlavePort = configuration.getMesosConfiguration().getSlaveHttpPort();
   }
 
   @Override
@@ -127,7 +132,7 @@ public class SingularityMailer implements Managed {
     final Optional<MesosFileChunkObject> logChunkObject;
 
     try {
-      logChunkObject = sandboxManager.read(slaveHostname, fullPath, Optional.of(0L), Optional.of(logLength));
+      logChunkObject = sandboxManager.read(HostAndPort.fromParts(slaveHostname, mesosSlavePort), fullPath, Optional.of(0L), Optional.of(logLength));
     } catch (IOException e) {
       LOG.error("Sandboxmanager failed to read {}/{} on slave {}", directory.get(), filename, slaveHostname, e);
       return Optional.absent();

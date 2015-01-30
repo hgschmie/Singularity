@@ -4,7 +4,7 @@ import static com.hubspot.mesos.SingularityResourceRequest.findNumberResourceReq
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import java.net.UnknownHostException;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,13 +33,13 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.net.HostAndPort;
 import com.google.common.net.InetAddresses;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -266,14 +266,10 @@ public final class MesosUtils {
     return state == TaskState.TASK_FAILED || state == TaskState.TASK_LOST || state == TaskState.TASK_KILLED || state == TaskState.TASK_FINISHED;
   }
 
-  public static String getMasterHostAndPort(MasterInfo masterInfo) {
+  public static HostAndPort getMasterHostAndPort(MasterInfo masterInfo) throws IOException {
     byte[] fromIp = ByteBuffer.allocate(4).putInt(masterInfo.getIp()).array();
 
-    try {
-      return String.format("%s:%s", InetAddresses.fromLittleEndianByteArray(fromIp).getHostAddress(), masterInfo.getPort());
-    } catch (UnknownHostException e) {
-      throw Throwables.propagate(e);
-    }
+    return HostAndPort.fromParts(InetAddresses.fromLittleEndianByteArray(fromIp).getHostAddress(), masterInfo.getPort());
   }
 
   private static Optional<Resource> getMatchingResource(Resource toMatch, List<Resource> resources) {

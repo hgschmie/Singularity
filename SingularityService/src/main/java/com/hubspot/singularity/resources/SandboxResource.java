@@ -24,6 +24,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.net.HostAndPort;
 import com.google.inject.Inject;
 import com.hubspot.mesos.json.MesosFileChunkObject;
 import com.hubspot.mesos.json.MesosFileObject;
@@ -50,14 +51,16 @@ public class SandboxResource extends AbstractHistoryResource {
 
   private final SandboxManager sandboxManager;
   private final SingularityLogSupport logSupport;
-  private final SingularityConfiguration configuration;
+  private final boolean sandboxDefaultsToTaskId;
+  private final int mesosSlavePort;
 
   @Inject
   public SandboxResource(HistoryManager historyManager, TaskManager taskManager, SandboxManager sandboxManager, DeployManager deployManager, SingularityLogSupport logSupport,
       SingularityConfiguration configuration) {
     super(historyManager, taskManager, deployManager);
 
-    this.configuration = configuration;
+    this.sandboxDefaultsToTaskId = configuration.isSandboxDefaultsToTaskId();
+    this.mesosSlavePort = configuration.getMesosConfiguration().getSlaveHttpPort();
     this.sandboxManager = sandboxManager;
     this.logSupport = logSupport;
   }
@@ -79,7 +82,7 @@ public class SandboxResource extends AbstractHistoryResource {
     if (currentDirectory != null) {
       return currentDirectory;
     }
-    if (configuration.isSandboxDefaultsToTaskId()) {
+    if (sandboxDefaultsToTaskId) {
       return taskId;
     }
     return "";
@@ -102,7 +105,7 @@ public class SandboxResource extends AbstractHistoryResource {
     final int substringTruncationLength = currentDirectory.length() == 0 ? pathToRoot.length() + 1 : pathToRoot.length() + currentDirectory.length() + 2;
 
     try {
-      Collection<MesosFileObject> mesosFiles = sandboxManager.browse(slaveHostname, fullPath);
+      Collection<MesosFileObject> mesosFiles = sandboxManager.browse(HostAndPort.fromParts(slaveHostname, mesosSlavePort), fullPath);
       List<SingularitySandboxFile> sandboxFiles = Lists.newArrayList(Iterables.transform(mesosFiles, new Function<MesosFileObject, SingularitySandboxFile>() {
 
         @Override
@@ -134,7 +137,7 @@ public class SandboxResource extends AbstractHistoryResource {
     final String fullPath = new File(history.getDirectory().get(), path).toString();
 
     try {
-      final Optional<MesosFileChunkObject> maybeChunk = sandboxManager.read(slaveHostname, fullPath, offset, length);
+      final Optional<MesosFileChunkObject> maybeChunk = sandboxManager.read(HostAndPort.fromParts(slaveHostname, mesosSlavePort), fullPath, offset, length);
 
       checkNotFound(maybeChunk.isPresent(), "File %s does not exist for task ID %s", fullPath, taskId);
 

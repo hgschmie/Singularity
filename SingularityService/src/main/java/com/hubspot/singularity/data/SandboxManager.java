@@ -11,6 +11,7 @@ import javax.ws.rs.core.UriBuilder;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
+import com.google.common.net.HostAndPort;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.mesos.json.MesosFileChunkObject;
@@ -30,8 +31,8 @@ public class SandboxManager {
 
   private static final TypeReference<Collection<MesosFileObject>> MESOS_FILE_OBJECTS = new TypeReference<Collection<MesosFileObject>>() {};
 
-  public static final String FILES_BROWSE = "http://localhost:5051/files/browse.json";
-  public static final String FILES_READ = "http://localhost:5051/files/read.json";
+  public static final String FILES_BROWSE = "/files/browse.json";
+  public static final String FILES_READ = "/files/read.json";
 
   @Inject
   public SandboxManager(final OkHttpClient httpClient, SingularityConfiguration configuration, ObjectMapper objectMapper) {
@@ -44,8 +45,12 @@ public class SandboxManager {
     this.httpClient.setWriteTimeout(this.configuration.getSandboxHttpTimeoutMillis(), TimeUnit.MILLISECONDS);
   }
 
-  public Collection<MesosFileObject> browse(String slaveHostname, String fullPath) throws IOException {
-    URL url = UriBuilder.fromUri(FILES_BROWSE).host(slaveHostname).port(5051).queryParam("path", fullPath).build().toURL();
+  public Collection<MesosFileObject> browse(HostAndPort slaveHostAndPort, String fullPath) throws IOException {
+    URL url = UriBuilder.fromPath(FILES_BROWSE)
+        .scheme("http")
+        .host(slaveHostAndPort.getHostText()).port(slaveHostAndPort.getPort())
+        .queryParam("path", fullPath)
+        .build().toURL();
 
     Response response = httpClient.newCall(new Request.Builder().get().url(url).build()).execute();
 
@@ -54,7 +59,7 @@ public class SandboxManager {
     }
 
     if (!response.isSuccessful()) {
-      throw new SandboxException("Got response code %s from Mesos slave %s", response.code(), slaveHostname);
+      throw new SandboxException("Got response code %s from Mesos slave %s", response.code(), slaveHostAndPort);
     }
 
     try (ResponseBody body = response.body()) {
@@ -62,9 +67,12 @@ public class SandboxManager {
     }
   }
 
-  public Optional<MesosFileChunkObject> read(String slaveHostname, String fullPath, Optional<Long> offset, Optional<Long> length) throws IOException {
+  public Optional<MesosFileChunkObject> read(HostAndPort slaveHostAndPort, String fullPath, Optional<Long> offset, Optional<Long> length) throws IOException {
 
-    UriBuilder urlBuilder = UriBuilder.fromUri(FILES_READ).host(slaveHostname).port(5051).queryParam("path", fullPath);
+    UriBuilder urlBuilder = UriBuilder.fromPath(FILES_READ)
+        .scheme("http")
+        .host(slaveHostAndPort.getHostText()).port(slaveHostAndPort.getPort())
+        .queryParam("path", fullPath);
 
     if (offset.isPresent()) {
       urlBuilder.queryParam("offset", offset.get());
@@ -83,7 +91,7 @@ public class SandboxManager {
     }
 
     if (!response.isSuccessful()) {
-      throw new SandboxException("Got response code %s from Mesos slave %s", response.code(), slaveHostname);
+      throw new SandboxException("Got response code %s from Mesos slave %s", response.code(), slaveHostAndPort);
     }
     try (ResponseBody body = response.body()) {
       return Optional.of(objectMapper.readValue(body.byteStream(), MesosFileChunkObject.class));

@@ -12,8 +12,10 @@ public class MesosConfiguration {
 
   @NotNull
   private String master;
+
   @NotNull
   private String frameworkName;
+
   @NotNull
   private String frameworkId;
 
@@ -32,14 +34,12 @@ public class MesosConfiguration {
   private String defaultRackId = "DEFAULT";
 
   private int slaveHttpPort = 5051;
-  @NotNull
-  private Optional<Integer> slaveHttpsPort = Optional.absent();
 
-  private int maxNumInstancesPerRequest = 25;
-  private int maxNumCpusPerInstance = 50;
-  private int maxNumCpusPerRequest = 900;
-  private int maxMemoryMbPerInstance = 24000;
-  private int maxMemoryMbPerRequest = 450000;
+  private Integer maxNumInstancesPerRequest = null; // 25;
+  private Integer maxNumCpusPerInstance = null; // 50
+  private Integer maxNumCpusPerRequest = null; // 900
+  private Integer maxMemoryMbPerInstance = null; // 24_000
+  private Integer maxMemoryMbPerRequest = null;  // 450_000
 
   public boolean isUseNativeCode() {
     return useNativeCode;
@@ -49,43 +49,43 @@ public class MesosConfiguration {
     this.useNativeCode = useNativeCode;
   }
 
-  public int getMaxNumInstancesPerRequest() {
-    return maxNumInstancesPerRequest;
+  public Optional<Integer> getMaxNumInstancesPerRequest() {
+    return Optional.fromNullable(maxNumInstancesPerRequest);
   }
 
-  public void setMaxNumInstancesPerRequest(int maxNumInstancesPerRequest) {
+  public void setMaxNumInstancesPerRequest(Integer maxNumInstancesPerRequest) {
     this.maxNumInstancesPerRequest = maxNumInstancesPerRequest;
   }
 
-  public int getMaxNumCpusPerInstance() {
-    return maxNumCpusPerInstance;
+  public Optional<Integer> getMaxNumCpusPerInstance() {
+    return Optional.fromNullable(maxNumCpusPerInstance);
   }
 
-  public void setMaxNumCpusPerInstance(int maxNumCpusPerInstance) {
+  public void setMaxNumCpusPerInstance(Integer maxNumCpusPerInstance) {
     this.maxNumCpusPerInstance = maxNumCpusPerInstance;
   }
 
-  public int getMaxNumCpusPerRequest() {
-    return maxNumCpusPerRequest;
+  public Optional<Integer> getMaxNumCpusPerRequest() {
+    return Optional.fromNullable(maxNumCpusPerRequest);
   }
 
-  public void setMaxNumCpusPerRequest(int maxNumCpusPerRequest) {
+  public void setMaxNumCpusPerRequest(Integer maxNumCpusPerRequest) {
     this.maxNumCpusPerRequest = maxNumCpusPerRequest;
   }
 
-  public int getMaxMemoryMbPerInstance() {
-    return maxMemoryMbPerInstance;
+  public Optional<Integer> getMaxMemoryMbPerInstance() {
+    return Optional.fromNullable(maxMemoryMbPerInstance);
   }
 
-  public void setMaxMemoryMbPerInstance(int maxMemoryMbPerInstance) {
+  public void setMaxMemoryMbPerInstance(Integer maxMemoryMbPerInstance) {
     this.maxMemoryMbPerInstance = maxMemoryMbPerInstance;
   }
 
-  public int getMaxMemoryMbPerRequest() {
-    return maxMemoryMbPerRequest;
+  public Optional<Integer> getMaxMemoryMbPerRequest() {
+    return Optional.fromNullable(maxMemoryMbPerRequest);
   }
 
-  public void setMaxMemoryMbPerRequest(int maxMemoryMbPerRequest) {
+  public void setMaxMemoryMbPerRequest(Integer maxMemoryMbPerRequest) {
     this.maxMemoryMbPerRequest = maxMemoryMbPerRequest;
   }
 
@@ -167,14 +167,6 @@ public class MesosConfiguration {
 
   public void setSlaveHttpPort(int slaveHttpPort) {
     this.slaveHttpPort = slaveHttpPort;
-  }
-
-  public Optional<Integer> getSlaveHttpsPort() {
-    return slaveHttpsPort;
-  }
-
-  public void setSlaveHttpsPort(Optional<Integer> slaveHttpsPort) {
-    this.slaveHttpsPort = slaveHttpsPort;
   }
 
   /**

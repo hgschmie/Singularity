@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
+import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.hubspot.mesos.JavaUtils;
@@ -34,6 +35,7 @@ public class SingularityLogSupport implements Managed {
   private final TaskManager taskManager;
 
   private final ThreadPoolExecutor logLookupExecutorService;
+  private final int mesosSlavePort;
 
   @Inject
   public SingularityLogSupport(SingularityConfiguration configuration, MesosClient mesosClient, TaskManager taskManager) {
@@ -41,6 +43,7 @@ public class SingularityLogSupport implements Managed {
     this.taskManager = taskManager;
 
     this.logLookupExecutorService = JavaUtils.newFixedTimingOutThreadPool(configuration.getLogFetchMaxThreads(), TimeUnit.SECONDS.toMillis(1), "SingularityDirectoryFetcher-%d");
+    this.mesosSlavePort = configuration.getMesosConfiguration().getSlaveHttpPort();
   }
 
   @Override
@@ -72,7 +75,7 @@ public class SingularityLogSupport implements Managed {
   private void loadDirectory(SingularityTask task) {
     final long start = System.currentTimeMillis();
 
-    final String slaveUri = mesosClient.getSlaveUri(task.getOffer().getHostname());
+    final String slaveUri = mesosClient.getSlaveUri(HostAndPort.fromParts(task.getOffer().getHostname(), mesosSlavePort));
 
     LOG.info("Fetching slave data to find log directory for task {} from uri {}", task.getTaskId(), slaveUri);
 
