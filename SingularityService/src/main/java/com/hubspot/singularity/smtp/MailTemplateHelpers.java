@@ -2,6 +2,7 @@ package com.hubspot.singularity.smtp;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
+import com.google.common.net.HostAndPort;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.hubspot.mesos.MesosUtils;
@@ -49,11 +50,15 @@ public class MailTemplateHelpers {
   private final Optional<String> uiBaseUrl;
   private final Optional<SMTPConfiguration> smtpConfiguration;
 
+  private int mesosSlavePort;
+
   @Inject
   public MailTemplateHelpers(SandboxManager sandboxManager, SingularityConfiguration singularityConfiguration) {
     this.uiBaseUrl = singularityConfiguration.getUiConfiguration().getBaseUrl();
     this.sandboxManager = sandboxManager;
     this.smtpConfiguration = singularityConfiguration.getSmtpConfiguration();
+
+    this.mesosSlavePort = singularityConfiguration.getMesosConfiguration().getSlaveHttpPort();
   }
 
   /**
@@ -137,7 +142,7 @@ public class MailTemplateHelpers {
     final Optional<MesosFileChunkObject> logChunkObject;
 
     try {
-      logChunkObject = sandboxManager.read(slaveHostname, fullPath, Optional.of(0L), Optional.of(logLength));
+      logChunkObject = sandboxManager.read(HostAndPort.fromParts(slaveHostname, mesosSlavePort), fullPath, Optional.of(0L), Optional.of(logLength));
     } catch (IOException e) {
       LOG.error("Sandboxmanager failed to read {}/{} on slave {}", directory.get(), filename, slaveHostname, e);
       return Optional.absent();

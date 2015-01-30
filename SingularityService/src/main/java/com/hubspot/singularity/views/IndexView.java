@@ -23,8 +23,7 @@ public class IndexView extends View {
 
   private final String title;
 
-  private final Integer slaveHttpPort;
-  private final Integer slaveHttpsPort;
+  private final int slaveHttpPort;
 
   public IndexView(String singularityUriBase, String appRoot, SingularityConfiguration configuration) {
     super("index.mustache");
@@ -41,7 +40,6 @@ public class IndexView extends View {
     this.title = configuration.getUiConfiguration().getTitle();
 
     this.slaveHttpPort = configuration.getMesosConfiguration().getSlaveHttpPort();
-    this.slaveHttpsPort = configuration.getMesosConfiguration().getSlaveHttpsPort().orNull();
 
     this.defaultCpus = configuration.getMesosConfiguration().getDefaultCpus();
     this.defaultMemory = configuration.getMesosConfiguration().getDefaultMemory();
@@ -80,10 +78,6 @@ public class IndexView extends View {
     return slaveHttpPort;
   }
 
-  public Integer getSlaveHttpsPort() {
-    return slaveHttpsPort;
-  }
-
   public Integer getDefaultMemory() {
     return defaultMemory;
   }
@@ -103,8 +97,7 @@ public class IndexView extends View {
   @Override
   public String toString() {
     return "IndexView [appRoot=" + appRoot + ", staticRoot=" + staticRoot + ", apiRoot=" + apiRoot + ", navColor=" + navColor + ", defaultMemory=" + defaultMemory + ", defaultCpus=" + defaultCpus
-        + ", hideNewDeployButton=" + hideNewDeployButton + ", hideNewRequestButton=" + hideNewRequestButton + ", title=" + title + ", slaveHttpPort=" + slaveHttpPort + ", slaveHttpsPort="
-        + slaveHttpsPort + "]";
+        + ", hideNewDeployButton=" + hideNewDeployButton + ", hideNewRequestButton=" + hideNewRequestButton + ", title=" + title + ", slaveHttpPort=" + slaveHttpPort + "]";
   }
 
 }

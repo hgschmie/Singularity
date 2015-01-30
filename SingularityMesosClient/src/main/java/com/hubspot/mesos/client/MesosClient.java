@@ -1,7 +1,7 @@
 package com.hubspot.mesos.client;
 
-import static java.lang.String.format;
 import static com.hubspot.mesos.client.SingularityMesosClientModule.SINGULARITY_MESOS_CLIENT_NAME;
+import static java.lang.String.format;
 
 import java.io.IOException;
 import java.util.List;
@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.net.HostAndPort;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -28,12 +29,12 @@ public class MesosClient {
 
   private static final Logger LOG = LoggerFactory.getLogger(MesosClient.class);
 
-  private static final String MASTER_STATE_FORMAT = "http://%s/master/state.json";
-  private static final String MESOS_SLAVE_JSON_URL = "http://%s:5051/slave(1)/state.json";
-  private static final String MESOS_SLAVE_STATISTICS_URL = "http://%s:5051/monitor/statistics.json";
+  private static final String URI_TEMPLATE = "http://%s:%d%s";
+  private static final String MASTER_STATE_PATH = "/master/state.json";
+  private static final String MESOS_SLAVE_PATH = "/slave(1)/state.json";
+  private static final String MESOS_SLAVE_STATISTICS_PATH = "/monitor/statistics.json";
 
-  private static final TypeReference<List<MesosTaskMonitorObject>> TASK_MONITOR_TYPE_REFERENCE = new TypeReference<List<MesosTaskMonitorObject>>() {
-  };
+  private static final TypeReference<List<MesosTaskMonitorObject>> TASK_MONITOR_TYPE_REFERENCE = new TypeReference<List<MesosTaskMonitorObject>>() {};
 
   private final OkHttpClient okHttpClient;
   private final ObjectMapper objectMapper;
@@ -44,8 +45,8 @@ public class MesosClient {
     this.objectMapper = objectMapper;
   }
 
-  public String getMasterUri(String hostnameAndPort) {
-    return format(MASTER_STATE_FORMAT, hostnameAndPort);
+  public String getMasterUri(HostAndPort hostnameAndPort) {
+    return format(URI_TEMPLATE, hostnameAndPort.getHostText(), hostnameAndPort.getPort(), MASTER_STATE_PATH);
   }
 
   public static class MesosClientException extends RuntimeException {
@@ -96,16 +97,16 @@ public class MesosClient {
     return getFromMesos(uri, MesosMasterStateObject.class);
   }
 
-  public String getSlaveUri(String hostname) {
-    return format(MESOS_SLAVE_JSON_URL, hostname);
+  public String getSlaveUri(HostAndPort hostnameAndPort) {
+    return format(URI_TEMPLATE, hostnameAndPort.getHostText(), hostnameAndPort.getPort(), MESOS_SLAVE_PATH);
   }
 
   public MesosSlaveStateObject getSlaveState(String uri) {
     return getFromMesos(uri, MesosSlaveStateObject.class);
   }
 
-  public List<MesosTaskMonitorObject> getSlaveResourceUsage(String hostname) {
-    final String uri = format(MESOS_SLAVE_STATISTICS_URL, hostname);
+  public List<MesosTaskMonitorObject> getSlaveResourceUsage(HostAndPort hostnameAndPort) {
+    final String uri = format(URI_TEMPLATE, hostnameAndPort.getHostText(), hostnameAndPort.getPort(), MESOS_SLAVE_STATISTICS_PATH);
 
     Response response = getFromMesos(uri);
 

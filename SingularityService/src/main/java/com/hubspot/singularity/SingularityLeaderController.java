@@ -2,6 +2,7 @@ package com.hubspot.singularity;
 
 import io.dropwizard.lifecycle.Managed;
 
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.concurrent.TimeUnit;
@@ -124,7 +125,7 @@ public class SingularityLeaderController implements Managed, LeaderLatchListener
     }
   }
 
-  private SingularityHostState getHostState() {
+  private SingularityHostState getHostState() throws IOException {
     final boolean master = isMaster();
     final Protos.Status driverStatus = getCurrentStatus();
 
@@ -139,7 +140,7 @@ public class SingularityLeaderController implements Managed, LeaderLatchListener
     Optional<MasterInfo> mesosMasterInfo = getMaster();
 
     if (mesosMasterInfo.isPresent()) {
-      mesosMaster = MesosUtils.getMasterHostAndPort(mesosMasterInfo.get());
+      mesosMaster = MesosUtils.getMasterHostAndPort(mesosMasterInfo.get()).toString();
     }
 
     return new SingularityHostState(master, uptime, driverStatus.name(), millisSinceLastOfferTimestamp, hostAddress, hostAndPort.getHostText(), mesosMaster);

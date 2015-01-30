@@ -1,5 +1,7 @@
 package com.hubspot.singularity.smtp;
 
+import de.neuland.jade4j.Jade4J;
+import de.neuland.jade4j.template.JadeTemplate;
 import io.dropwizard.lifecycle.Managed;
 
 import java.util.Collection;
@@ -38,12 +40,12 @@ import com.hubspot.singularity.config.SingularityConfiguration;
 import com.hubspot.singularity.data.MetadataManager;
 import com.hubspot.singularity.data.TaskManager;
 
-import de.neuland.jade4j.Jade4J;
-import de.neuland.jade4j.template.JadeTemplate;
-
 public class SingularityMailer implements Managed {
 
   private static final Logger LOG = LoggerFactory.getLogger(SingularityMailer.class);
+
+  private static final String TASK_LINK_FORMAT = "%s/task/%s";
+  private static final String REQUEST_LINK_FORMAT = "%s/request/%s";
 
   private final SingularitySmtpSender smtpSender;
   private final SingularityConfiguration configuration;

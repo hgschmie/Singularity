@@ -34,13 +34,13 @@ public class SingularityValidator {
 
   private final int maxDeployIdSize;
   private final int maxRequestIdSize;
-  private final int maxCpusPerRequest;
-  private final int maxCpusPerInstance;
-  private final int maxInstancesPerRequest;
-  private final int maxMemoryMbPerRequest;
+  private final Optional<Integer> maxCpusPerRequest;
+  private final Optional<Integer> maxCpusPerInstance;
+  private final Optional<Integer> maxInstancesPerRequest;
+  private final Optional<Integer> maxMemoryMbPerRequest;
   private final int defaultCpus;
   private final int defaultMemoryMb;
-  private final int maxMemoryMbPerInstance;
+  private final Optional<Integer> maxMemoryMbPerInstance;
   private final boolean allowRequestsWithoutOwners;
   private final boolean createDeployIds;
   private final int deployIdLength;
@@ -84,14 +84,23 @@ public class SingularityValidator {
     checkBadRequest(cpusPerInstance > 0, "Request must have more than 0 cpus");
     checkBadRequest(memoryMbPerInstance > 0, "Request must have more than 0 memoryMb");
 
-    checkBadRequest(cpusPerInstance <= maxCpusPerInstance, "Deploy %s uses too many cpus %s (maxCpusPerInstance %s in mesos configuration)", deploy.getId(), cpusPerInstance, maxCpusPerInstance);
-    checkBadRequest(cpusPerInstance * instances <= maxCpusPerRequest,
-        "Deploy %s uses too many cpus %s (%s*%s) (cpusPerRequest %s in mesos configuration)", deploy.getId(), cpusPerInstance * instances, cpusPerInstance, instances, maxCpusPerRequest);
+    if (maxCpusPerInstance.isPresent()) {
+      checkBadRequest(cpusPerInstance <= maxCpusPerInstance.get(), "Deploy %s uses too many cpus %s (maxCpusPerInstance %s in mesos configuration)", deploy.getId(), cpusPerInstance, maxCpusPerInstance);
+    }
+    if (maxCpusPerRequest.isPresent()) {
+      checkBadRequest(cpusPerInstance * instances <= maxCpusPerRequest.get(),
+          "Deploy %s uses too many cpus %s (%s*%s) (cpusPerRequest %s in mesos configuration)", deploy.getId(), cpusPerInstance * instances, cpusPerInstance, instances, maxCpusPerRequest);
+    }
 
-    checkBadRequest(memoryMbPerInstance <= maxMemoryMbPerInstance,
-        "Deploy %s uses too much memoryMb %s (maxMemoryMbPerInstance %s in mesos configuration)", deploy.getId(), memoryMbPerInstance, maxMemoryMbPerInstance);
-    checkBadRequest(memoryMbPerInstance * instances <= maxMemoryMbPerRequest, "Deploy %s uses too much memoryMb %s (%s*%s) (maxMemoryMbPerRequest %s in mesos configuration)", deploy.getId(),
-        memoryMbPerInstance * instances, memoryMbPerInstance, instances, maxMemoryMbPerRequest);
+    if (maxMemoryMbPerInstance.isPresent()) {
+      checkBadRequest(memoryMbPerInstance <= maxMemoryMbPerInstance.get(),
+          "Deploy %s uses too much memoryMb %s (maxMemoryMbPerInstance %s in mesos configuration)", deploy.getId(), memoryMbPerInstance, maxMemoryMbPerInstance);
+    }
+
+    if (maxMemoryMbPerRequest.isPresent()) {
+      checkBadRequest(memoryMbPerInstance * instances <= maxMemoryMbPerRequest.get(), "Deploy %s uses too much memoryMb %s (%s*%s) (maxMemoryMbPerRequest %s in mesos configuration)", deploy.getId(),
+          memoryMbPerInstance * instances, memoryMbPerInstance, instances, maxMemoryMbPerRequest);
+    }
   }
 
   public SingularityRequest checkSingularityRequest(SingularityRequest request, Optional<SingularityRequest> existingRequest, Optional<SingularityDeploy> activeDeploy,
@@ -105,7 +114,9 @@ public class SingularityValidator {
     checkBadRequest(request.getId().length() < maxRequestIdSize, "Request id must be less than %s characters, it is %s (%s)", maxRequestIdSize, request.getId().length(), request.getId());
     checkBadRequest(!request.getInstances().isPresent() || request.getInstances().get() > 0, "Instances must be greater than 0");
 
-    checkBadRequest(request.getInstancesSafe() <= maxInstancesPerRequest,"Instances (%s) be greater than %s (maxInstancesPerRequest in mesos configuration)", request.getInstancesSafe(), maxInstancesPerRequest);
+    if (maxInstancesPerRequest.isPresent()) {
+      checkBadRequest(request.getInstancesSafe() <= maxInstancesPerRequest.get(),"Instances (%s) be greater than %s (maxInstancesPerRequest in mesos configuration)", request.getInstancesSafe(), maxInstancesPerRequest);
+    }
 
     if (existingRequest.isPresent()) {
       checkForIllegalChanges(request, existingRequest.get());
