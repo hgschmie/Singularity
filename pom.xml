@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.basepom</groupId>
     <artifactId>basepom-standard-oss</artifactId>
-    <version>9</version>
+    <version>10</version>
   </parent>
 
   <groupId>com.hubspot</groupId>
@@ -133,10 +133,6 @@
             <groupId>org.eclipse.jetty.orbit</groupId>
             <artifactId>javax.servlet</artifactId>
           </exclusion>
-          <exclusion>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-          </exclusion>
         </exclusions>
       </dependency>
 
@@ -214,10 +210,6 @@
           <exclusion>
             <groupId>org.eclipse.jetty.orbit</groupId>
             <artifactId>javax.servlet</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -472,6 +464,13 @@
     <pluginManagement>
       <plugins>
         <plugin>
+          <groupId>pl.project13.maven</groupId>
+          <artifactId>git-commit-id-plugin</artifactId>
+          <configuration>
+            <useNativeGit>false</useNativeGit>
+          </configuration>
+        </plugin>
+        <plugin>
           <groupId>com.github.eirslett</groupId>
           <artifactId>frontend-maven-plugin</artifactId>
           <version>0.0.16</version>
@@ -497,6 +496,17 @@
               <version>${project.version}</version>
             </dependency>
           </dependencies>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <configuration>
+            <artifactSet>
+              <excludes>
+                <exclude>com.google.code.findbugs:jsr305</exclude>
+              </excludes>
+            </artifactSet>
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>
