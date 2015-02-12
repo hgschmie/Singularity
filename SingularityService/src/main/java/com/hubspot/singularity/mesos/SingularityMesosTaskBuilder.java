@@ -252,27 +252,28 @@ class SingularityMesosTaskBuilder {
     ContainerInfo.Builder containerBuilder = ContainerInfo.newBuilder();
     containerBuilder.setType(containerInfo.getType());
 
-    final Optional<SingularityDockerInfo> dockerInfo = containerInfo.getDocker();
+    final Optional<SingularityDockerInfo> maybeDockerInfo = containerInfo.getDocker();
 
-    if (dockerInfo.isPresent()) {
+    if (maybeDockerInfo.isPresent()) {
       final DockerInfo.Builder dockerInfoBuilder = DockerInfo.newBuilder();
-      dockerInfoBuilder.setImage(dockerInfo.get().getImage());
+      SingularityDockerInfo dockerInfo = maybeDockerInfo.get();
 
-      if (ports.length > 0 && !dockerInfo.get().getPortMappings().isEmpty()) {
-        for (SingularityDockerPortMapping singularityDockerPortMapping : dockerInfo.get().getPortMappings()) {
+      dockerInfoBuilder.setImage(dockerInfo.getImage());
+      if (dockerInfo.getNetwork().isPresent()) {
+        dockerInfoBuilder.setNetwork(dockerInfo.getNetwork().get());
+      }
+
+      if (ports.length > 0 && !dockerInfo.getPortMappings().isEmpty()) {
+        for (SingularityDockerPortMapping singularityDockerPortMapping : dockerInfo.getPortMappings()) {
           final Optional<DockerInfo.PortMapping> maybePortMapping = buildPortMapping(singularityDockerPortMapping, ports);
 
           if (maybePortMapping.isPresent()) {
             dockerInfoBuilder.addPortMappings(maybePortMapping.get());
           }
         }
-
-        if (dockerInfo.get().getNetwork().isPresent()) {
-          dockerInfoBuilder.setNetwork(dockerInfo.get().getNetwork().get());
-        }
       }
 
-      dockerInfoBuilder.setPrivileged(dockerInfo.get().isPrivileged());
+      dockerInfoBuilder.setPrivileged(dockerInfo.isPrivileged());
 
       containerBuilder.setDocker(dockerInfoBuilder);
     }
