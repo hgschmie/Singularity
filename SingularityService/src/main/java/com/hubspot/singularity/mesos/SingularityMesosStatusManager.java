@@ -3,6 +3,7 @@ package com.hubspot.singularity.mesos;
 import javax.inject.Singleton;
 
 import org.apache.mesos.Protos;
+import org.apache.mesos.Protos.ContainerNetworkSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,7 +125,11 @@ public class SingularityMesosStatusManager extends SingularitySchedulerParticipa
       }
     }
 
-    final SingularityTaskHistoryUpdate taskUpdate = new SingularityTaskHistoryUpdate(taskIdObj, timestamp, taskState, status.hasMessage() ? Optional.of(status.getMessage()) : Optional.<String> absent());
+    final SingularityTaskHistoryUpdate taskUpdate = new SingularityTaskHistoryUpdate(taskIdObj,
+        timestamp,
+        taskState,
+        status.hasMessage() ? Optional.of(status.getMessage()) : Optional.<String> absent(),
+        status.hasContainerNetworkSettings() ? Optional.of(status.getContainerNetworkSettings()) : Optional.<ContainerNetworkSettings>absent());
     final SingularityCreateResult taskHistoryUpdateCreateResult = taskManager.saveTaskHistoryUpdate(taskUpdate);
 
     logSupport.checkDirectory(taskIdObj);

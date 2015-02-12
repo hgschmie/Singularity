@@ -10,6 +10,8 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Singleton;
 
 import org.apache.commons.lang3.time.DurationFormatUtils;
+import org.apache.mesos.Protos.ContainerNetworkSettings;
+import org.apache.mesos.Protos.TaskStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +23,7 @@ import com.hubspot.singularity.SingularityAbort;
 import com.hubspot.singularity.SingularityMainModule;
 import com.hubspot.singularity.SingularityPendingDeploy;
 import com.hubspot.singularity.SingularityTask;
+import com.hubspot.singularity.SingularityTaskStatusHolder;
 import com.hubspot.singularity.config.SingularityConfiguration;
 import com.hubspot.singularity.data.TaskManager;
 import com.squareup.okhttp.OkHttpClient;
@@ -113,7 +116,17 @@ public class SingularityHealthchecker {
       return Optional.absent();
     }
 
-    final String hostname = task.getOffer().getHostname();
+    String hostname = task.getOffer().getHostname();
+
+    Optional<SingularityTaskStatusHolder> maybeTaskStatusHolder = taskManager.getLastActiveTaskStatus(task.getTaskId());
+    if (maybeTaskStatusHolder.isPresent()) {
+      Optional<TaskStatus> maybeTaskStatus = maybeTaskStatusHolder.get().getTaskStatus();
+      if (maybeTaskStatus.isPresent() && maybeTaskStatus.get().hasContainerNetworkSettings()) {
+        ContainerNetworkSettings containerNetworkSettings = maybeTaskStatus.get().getContainerNetworkSettings();
+        hostname = containerNetworkSettings.getIpAddress();
+        LOG.debug("Updating hostname from container network settings to '{}", hostname);
+      }
+    }
 
     Optional<Long> firstPort = task.getFirstPort();
 

@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.utils.ZKPaths;
+import org.apache.mesos.Protos.ContainerNetworkSettings;
 import org.apache.mesos.Protos.TaskStatus;
 
 import com.google.common.base.Function;
@@ -422,7 +423,7 @@ public class TaskManager extends CuratorAsyncManager {
 
     final long now = System.currentTimeMillis();
 
-    saveTaskHistoryUpdate(new SingularityTaskHistoryUpdate(task.getTaskId(), now, ExtendedTaskState.TASK_LAUNCHED, Optional.<String>absent()));
+    saveTaskHistoryUpdate(new SingularityTaskHistoryUpdate(task.getTaskId(), now, ExtendedTaskState.TASK_LAUNCHED, Optional.<String>absent(), Optional.<ContainerNetworkSettings>absent()));
     saveLastActiveTaskStatus(new SingularityTaskStatusHolder(task.getTaskId(), Optional.<TaskStatus>absent(), now, serverId, Optional.of(task.getOffer().getSlaveId().getValue())));
 
     create(getTaskPath(task.getTaskId()), task, taskTranscoder);
@@ -468,7 +469,7 @@ public class TaskManager extends CuratorAsyncManager {
       msg.append(cleanup.getMessage().get());
     }
 
-    saveTaskHistoryUpdate(new SingularityTaskHistoryUpdate(cleanup.getTaskId(), cleanup.getTimestamp(), ExtendedTaskState.TASK_CLEANING, Optional.of(msg.toString())));
+    saveTaskHistoryUpdate(new SingularityTaskHistoryUpdate(cleanup.getTaskId(), cleanup.getTimestamp(), ExtendedTaskState.TASK_CLEANING, Optional.of(msg.toString()), Optional.<ContainerNetworkSettings>absent()));
   }
 
   public SingularityCreateResult createTaskCleanup(SingularityTaskCleanup cleanup) {

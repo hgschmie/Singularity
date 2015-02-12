@@ -1,6 +1,10 @@
 package com.hubspot.singularity;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import javax.annotation.Nonnull;
+
+import org.apache.mesos.Protos.ContainerNetworkSettings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -15,6 +19,7 @@ public class SingularityTaskHistoryUpdate extends SingularityTaskIdHolder implem
   private final long timestamp;
   private final ExtendedTaskState taskState;
   private final Optional<String> statusMessage;
+  private final Optional<ContainerNetworkSettings> containerNetworkSettings;
 
   public enum SimplifiedTaskState {
     UNKNOWN, WAITING, RUNNING, DONE
@@ -50,12 +55,17 @@ public class SingularityTaskHistoryUpdate extends SingularityTaskIdHolder implem
   }
 
   @JsonCreator
-  public SingularityTaskHistoryUpdate(@JsonProperty("taskId") SingularityTaskId taskId, @JsonProperty("timestamp") long timestamp, @JsonProperty("taskState") ExtendedTaskState taskState, @JsonProperty("statusMessage") Optional<String> statusMessage) {
+  public SingularityTaskHistoryUpdate(@JsonProperty("taskId") SingularityTaskId taskId,
+      @JsonProperty("timestamp") long timestamp,
+      @JsonProperty("taskState") ExtendedTaskState taskState,
+      @JsonProperty("statusMessage") Optional<String> statusMessage,
+      @JsonProperty("containerNetworkSettings") Optional<ContainerNetworkSettings> containerNetworkSettings) {
     super(taskId);
 
     this.timestamp = timestamp;
     this.taskState = taskState;
     this.statusMessage = statusMessage;
+    this.containerNetworkSettings = checkNotNull(containerNetworkSettings, "containerNetworkSettings is null");
   }
 
   @Override
@@ -69,7 +79,7 @@ public class SingularityTaskHistoryUpdate extends SingularityTaskIdHolder implem
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(getTaskId(), timestamp, taskState, statusMessage);
+    return Objects.hashCode(getTaskId(), timestamp, taskState, statusMessage, containerNetworkSettings);
   }
 
   @Override
@@ -86,7 +96,8 @@ public class SingularityTaskHistoryUpdate extends SingularityTaskIdHolder implem
     return Objects.equal(this.getTaskId(), that.getTaskId())
         && Objects.equal(this.timestamp, that.timestamp)
         && Objects.equal(this.taskState, that.taskState)
-        && Objects.equal(statusMessage, statusMessage);
+        && Objects.equal(this.statusMessage, that.statusMessage)
+        && Objects.equal(this.containerNetworkSettings, that.containerNetworkSettings);
   }
 
   public long getTimestamp() {
@@ -101,9 +112,18 @@ public class SingularityTaskHistoryUpdate extends SingularityTaskIdHolder implem
     return statusMessage;
   }
 
+  public Optional<ContainerNetworkSettings> getContainerNetworkSettings() {
+    return containerNetworkSettings;
+  }
+
   @Override
   public String toString() {
-    return "SingularityTaskHistoryUpdate [taskId=" + getTaskId() + ", timestamp=" + timestamp + ", taskState=" + taskState + ", statusMessage=" + statusMessage + "]";
+    return "SingularityTaskHistoryUpdate [taskId=" + getTaskId() +
+        ", timestamp=" + timestamp +
+        ", taskState=" + taskState +
+        ", statusMessage=" + statusMessage +
+        ", containerNetworkSettings=" + containerNetworkSettings +
+        "]";
   }
 
 }
