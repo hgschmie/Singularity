@@ -18,6 +18,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.mesos.Protos.TaskStatus;
+
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.base.Optional;
@@ -37,6 +39,7 @@ import com.hubspot.singularity.SingularityService;
 import com.hubspot.singularity.SingularitySlave;
 import com.hubspot.singularity.SingularityTask;
 import com.hubspot.singularity.SingularityTaskCleanup;
+import com.hubspot.singularity.SingularityTaskStatusHolder;
 import com.hubspot.singularity.SingularityTaskCleanup.TaskCleanupType;
 import com.hubspot.singularity.SingularityTaskId;
 import com.hubspot.singularity.SingularityTaskRequest;
@@ -216,10 +219,24 @@ public class TaskResource {
   }
 
   @GET
+  @Timed
+  @ExceptionMetered
   @Path("/task/{taskId}/cleanup")
   @ApiOperation("Get the cleanup object for the task, if it exists")
   public Optional<SingularityTaskCleanup> getTaskCleanup(@PathParam("taskId") String taskId) {
     return taskManager.getTaskCleanup(taskId);
+  }
+
+  @Timed
+  @ExceptionMetered
+  @Path("/task/{taskId}/status")
+  @ApiOperation("Retrieve latest task status for a given task")
+  public TaskStatus getStatus(@PathParam("taskId") String taskId) {
+    SingularityTask task = checkActiveTask(taskId);
+
+    Optional<SingularityTaskStatusHolder> maybeTaskStatusHolder = taskManager.getLastActiveTaskStatus(task.getTaskId());
+    checkNotFound(maybeTaskStatusHolder.isPresent() && maybeTaskStatusHolder.get().getTaskStatus().isPresent(), "No task status for '%s' found", taskId);
+    return maybeTaskStatusHolder.get().getTaskStatus().get();
   }
 
   @DELETE

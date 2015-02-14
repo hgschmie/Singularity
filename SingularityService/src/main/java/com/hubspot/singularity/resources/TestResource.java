@@ -19,6 +19,7 @@ import com.hubspot.singularity.SingularityLeaderController;
 import com.hubspot.singularity.SingularityService;
 import com.hubspot.singularity.config.SingularityConfiguration;
 import com.hubspot.singularity.mesos.SingularityDriver;
+import com.hubspot.singularity.scheduler.SingularityTaskReconciliation;
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiOperation;
 
@@ -31,13 +32,19 @@ public class TestResource {
   private final SingularityLeaderController managed;
   private final SingularityConfiguration configuration;
   private final SingularityDriver driver;
+  private final SingularityTaskReconciliation taskReconciliation;
 
   @Inject
-  public TestResource(SingularityConfiguration configuration, SingularityLeaderController managed, SingularityAbort abort, final SingularityDriver driver) {
+  public TestResource(SingularityConfiguration configuration,
+      SingularityLeaderController managed,
+      SingularityAbort abort,
+      final SingularityDriver driver,
+      final SingularityTaskReconciliation taskReconcilliation) {
     this.configuration = configuration;
     this.managed = managed;
     this.abort = abort;
     this.driver = driver;
+    this.taskReconciliation = taskReconcilliation;
   }
 
   @POST
@@ -107,5 +114,16 @@ public class TestResource {
     checkForbidden(configuration.isAllowTestResourceCalls(), "Test resource calls are disabled (set isAllowTestResourceCalls to true in configuration)");
 
     managed.start();
+  }
+
+  @POST
+  @Timed
+  @ExceptionMetered
+  @Path("/reconcile")
+  @ApiOperation("Make this instance of Singularity believe it's elected leader.")
+  public void setReconciliation() {
+    checkForbidden(configuration.isAllowTestResourceCalls(), "Test resource calls are disabled (set isAllowTestResourceCalls to true in configuration)");
+
+    taskReconciliation.startReconciliation();
   }
 }

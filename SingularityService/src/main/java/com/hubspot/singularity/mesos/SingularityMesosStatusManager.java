@@ -4,6 +4,7 @@ import javax.inject.Singleton;
 
 import org.apache.mesos.Protos;
 import org.apache.mesos.Protos.ContainerNetworkSettings;
+import org.apache.mesos.Protos.TaskStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,8 +100,24 @@ public class SingularityMesosStatusManager extends SingularitySchedulerParticipa
 
     final SingularityTaskId taskIdObj = taskIdTranscoder.fromString(taskId);
 
-    final SingularityTaskStatusHolder newTaskStatusHolder = new SingularityTaskStatusHolder(taskIdObj, Optional.of(status), System.currentTimeMillis(), serverId, Optional.<String> absent());
     final Optional<SingularityTaskStatusHolder> previousTaskStatusHolder = taskManager.getLastActiveTaskStatus(taskIdObj);
+
+
+    // If the status update did not come from the slave (e.g. because of reconciliation), keep the Container network info alive.
+    if (status.getSource() != TaskStatus.Source.SOURCE_SLAVE) {
+      Protos.TaskStatus.Builder builder = Protos.TaskStatus.newBuilder(status);
+      if (previousTaskStatusHolder.isPresent() && previousTaskStatusHolder.get().getTaskStatus().isPresent()) {
+        Protos.TaskStatus oldStatus = previousTaskStatusHolder.get().getTaskStatus().get();
+        if (oldStatus.hasContainerNetworkSettings()) {
+          builder.setContainerNetworkSettings(oldStatus.getContainerNetworkSettings());
+          status = builder.build();
+        }
+      }
+    }
+
+    final SingularityTaskStatusHolder newTaskStatusHolder = new SingularityTaskStatusHolder(taskIdObj, Optional.of(status), System.currentTimeMillis(), serverId, Optional.<String> absent());
+
+
     final ExtendedTaskState taskState = ExtendedTaskState.fromTaskState(status.getState());
 
     if (isDuplicateOrIgnorableStatusUpdate(previousTaskStatusHolder, newTaskStatusHolder)) {
