@@ -4,7 +4,7 @@ import com.google.common.base.Optional;
 
 public enum RequestType {
 
-  SERVICE(true, true, true), WORKER(true, true, true), SCHEDULED(false, true, false), ON_DEMAND(false, false, false), RUN_ONCE(false, false, false);
+  SERVICE(true, true, true), SCHEDULED(false, true, false), ON_DEMAND(false, false, false), RUN_ONCE(false, false, false);
 
   private final boolean longRunning;
   private final boolean alwaysRunning;
@@ -38,11 +38,6 @@ public enum RequestType {
       return RequestType.ON_DEMAND;
     }
 
-//    if (loadBalanced.isPresent() && loadBalanced.get().booleanValue()) {
-//      return RequestType.SERVICE;
-//    }
-//
-    return RequestType.WORKER;
+    return RequestType.SERVICE;
   }
-
 }

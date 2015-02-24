@@ -24,10 +24,6 @@ public class SingularityRequest {
   private final Optional<Long> killOldNonLongRunningTasksAfterMillis;
   private final Optional<Long> scheduledExpectedRuntimeMillis;
 
-  //"use requestType instead"
-  @Deprecated
-  private final Optional<Boolean> daemon;
-
   private final Optional<Integer> instances;
 
   private final Optional<Boolean> rackSensitive;
@@ -45,7 +41,6 @@ public class SingularityRequest {
     this.owners = owners;
     this.numRetriesOnFailure = numRetriesOnFailure;
     this.schedule = schedule;
-    this.daemon = daemon;
     this.rackSensitive = rackSensitive;
     this.instances = instances;
     this.killOldNonLongRunningTasksAfterMillis = killOldNonLongRunningTasksAfterMillis;
@@ -64,7 +59,6 @@ public class SingularityRequest {
 
   public SingularityRequestBuilder toBuilder() {
     return new SingularityRequestBuilder(id, requestType)
-    .setDaemon(daemon)
     .setInstances(instances)
     .setNumRetriesOnFailure(numRetriesOnFailure)
     .setOwners(copyOfList(owners))
@@ -96,11 +90,6 @@ public class SingularityRequest {
 
   public Optional<String> getQuartzSchedule() {
     return quartzSchedule;
-  }
-
-  @Deprecated
-  public Optional<Boolean> getDaemon() {
-    return daemon;
   }
 
   public Optional<Integer> getInstances() {
@@ -155,12 +144,6 @@ public class SingularityRequest {
   }
 
   @JsonIgnore
-  @Deprecated
-  public boolean isDaemon() {
-    return daemon.or(Boolean.TRUE).booleanValue();
-  }
-
-  @JsonIgnore
   public boolean isLongRunning() {
     return requestType.isLongRunning();
   }
@@ -194,7 +177,7 @@ public class SingularityRequest {
   public String toString() {
     return "SingularityRequest [id=" + id + ", requestType=" + requestType + ", owners=" + owners + ", numRetriesOnFailure=" + numRetriesOnFailure + ", schedule=" + schedule + ", quartzSchedule="
         + quartzSchedule + ", scheduleType=" + scheduleType + ", killOldNonLongRunningTasksAfterMillis=" + killOldNonLongRunningTasksAfterMillis + ", scheduledExpectedRuntimeMillis="
-        + scheduledExpectedRuntimeMillis + ", daemon=" + daemon + ", instances=" + instances + ", rackSensitive=" + rackSensitive + ", rackAffinity=" + rackAffinity + ", slavePlacement="
+        + scheduledExpectedRuntimeMillis + ", instances=" + instances + ", rackSensitive=" + rackSensitive + ", rackAffinity=" + rackAffinity + ", slavePlacement="
         + slavePlacement + "]";
   }
 

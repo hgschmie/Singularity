@@ -225,7 +225,7 @@ public class SingularitySchedulerTestBase extends SingularityCuratorTestBase {
   }
 
   protected void protectedInitRequest(boolean isScheduled) {
-    RequestType requestType = RequestType.WORKER;
+    RequestType requestType = RequestType.SERVICE;
 
     if (isScheduled) {
       requestType = RequestType.SCHEDULED;
@@ -336,7 +336,7 @@ public class SingularitySchedulerTestBase extends SingularityCuratorTestBase {
   }
 
   protected SingularityRequest buildRequest(String requestId) {
-    SingularityRequest request = new SingularityRequestBuilder(requestId, RequestType.WORKER).build();
+    SingularityRequest request = new SingularityRequestBuilder(requestId, RequestType.SERVICE).build();
 
     saveRequest(request);
 

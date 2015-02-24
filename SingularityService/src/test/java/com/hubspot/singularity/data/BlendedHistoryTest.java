@@ -48,7 +48,7 @@ public class BlendedHistoryTest extends SingularityCuratorTestBase {
   public void testBlendedRequestHistory() {
     HistoryManager hm = mock(HistoryManager.class);
     String rid = "rid";
-    request = new SingularityRequestBuilder(rid, RequestType.WORKER).build();
+    request = new SingularityRequestBuilder(rid, RequestType.SERVICE).build();
     RequestHistoryHelper rhh = new RequestHistoryHelper(requestManager, hm);
 
     mockRequestHistory(hm, Collections.<SingularityRequestHistory> emptyList());

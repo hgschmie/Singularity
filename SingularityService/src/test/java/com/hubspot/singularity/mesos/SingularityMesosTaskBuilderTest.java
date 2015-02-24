@@ -74,7 +74,7 @@ public class SingularityMesosTaskBuilderTest {
 
   @Test
   public void testShellCommand() {
-    final SingularityRequest request = new SingularityRequestBuilder("test", RequestType.WORKER).build();
+    final SingularityRequest request = new SingularityRequestBuilder("test", RequestType.SERVICE).build();
     final SingularityDeploy deploy = new SingularityDeployBuilder("test", "1")
         .setCommand(Optional.of("/bin/echo hi"))
         .build();
@@ -88,7 +88,7 @@ public class SingularityMesosTaskBuilderTest {
 
   @Test
   public void testArgumentCommand() {
-    final SingularityRequest request = new SingularityRequestBuilder("test", RequestType.WORKER).build();
+    final SingularityRequest request = new SingularityRequestBuilder("test", RequestType.SERVICE).build();
     final SingularityDeploy deploy = new SingularityDeployBuilder("test", "1")
         .setCommand(Optional.of("/bin/echo"))
         .setArguments(Optional.of(Collections.singletonList("wat")))
@@ -119,7 +119,7 @@ public class SingularityMesosTaskBuilderTest {
     final SingularityDockerPortMapping offerMapping =
         new SingularityDockerPortMapping(Optional.<SingularityPortMappingType>absent(), 81, Optional.of(SingularityPortMappingType.FROM_OFFER), 0, Optional.of("udp"));
 
-    final SingularityRequest request = new SingularityRequestBuilder("test", RequestType.WORKER).build();
+    final SingularityRequest request = new SingularityRequestBuilder("test", RequestType.SERVICE).build();
     final SingularityContainerInfo containerInfo = new SingularityContainerInfo(
         Type.DOCKER,
         Optional.of(Collections.singletonList(new SingularityVolume("/container", Optional.of("/host"), Mode.RW))),

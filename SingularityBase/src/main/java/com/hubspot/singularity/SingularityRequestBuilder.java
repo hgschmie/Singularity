@@ -1,5 +1,7 @@
 package com.hubspot.singularity;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.List;
 
 import com.google.common.base.Optional;
@@ -20,10 +22,6 @@ public class SingularityRequestBuilder {
   private Optional<Long> scheduledExpectedRuntimeMillis;
 
 
-  @Deprecated
-  // use requestType
-  private Optional<Boolean> daemon;
-
   private Optional<Integer> instances;
 
   private Optional<Boolean> rackSensitive;
@@ -31,8 +29,8 @@ public class SingularityRequestBuilder {
   private Optional<SlavePlacement> slavePlacement;
 
   public SingularityRequestBuilder(String id, RequestType requestType) {
-    this.id = id;
-    this.requestType = requestType;
+    this.id = checkNotNull(id, "id is null");
+    this.requestType = checkNotNull(requestType, "requestType is null");
     this.owners = Optional.absent();
     this.numRetriesOnFailure = Optional.absent();
     this.schedule = Optional.absent();
@@ -44,11 +42,10 @@ public class SingularityRequestBuilder {
     this.rackAffinity = Optional.absent();
     this.slavePlacement = Optional.absent();
     this.scheduledExpectedRuntimeMillis = Optional.absent();
-    this.daemon = Optional.absent();
   }
 
   public SingularityRequest build() {
-    return new SingularityRequest(id, requestType, owners, numRetriesOnFailure, schedule, daemon, instances, rackSensitive, killOldNonLongRunningTasksAfterMillis, scheduleType, quartzSchedule,
+    return new SingularityRequest(id, requestType, owners, numRetriesOnFailure, schedule, Optional.<Boolean>absent(), instances, rackSensitive, killOldNonLongRunningTasksAfterMillis, scheduleType, quartzSchedule,
         rackAffinity, slavePlacement, scheduledExpectedRuntimeMillis);
   }
 
@@ -80,17 +77,6 @@ public class SingularityRequestBuilder {
 
   public SingularityRequestBuilder setSchedule(Optional<String> schedule) {
     this.schedule = schedule;
-    return this;
-  }
-
-  @Deprecated
-  public Optional<Boolean> getDaemon() {
-    return daemon;
-  }
-
-  @Deprecated
-  public SingularityRequestBuilder setDaemon(Optional<Boolean> daemon) {
-    this.daemon = daemon;
     return this;
   }
 
@@ -174,7 +160,7 @@ public class SingularityRequestBuilder {
   public String toString() {
     return "SingularityRequestBuilder [id=" + id + ", requestType=" + requestType + ", owners=" + owners + ", numRetriesOnFailure=" + numRetriesOnFailure + ", schedule=" + schedule
         + ", quartzSchedule=" + quartzSchedule + ", scheduleType=" + scheduleType + ", killOldNonLongRunningTasksAfterMillis=" + killOldNonLongRunningTasksAfterMillis
-        + ", scheduledExpectedRuntimeMillis=" + scheduledExpectedRuntimeMillis + ", daemon=" + daemon + ", instances=" + instances + ", rackSensitive=" + rackSensitive + ", rackAffinity="
+        + ", scheduledExpectedRuntimeMillis=" + scheduledExpectedRuntimeMillis + ", instances=" + instances + ", rackSensitive=" + rackSensitive + ", rackAffinity="
         + rackAffinity + ", slavePlacement=" + slavePlacement + "]";
   }
 

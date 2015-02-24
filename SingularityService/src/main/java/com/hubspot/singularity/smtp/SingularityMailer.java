@@ -178,7 +178,6 @@ public class SingularityMailer implements Managed {
           case SCHEDULED:
             return Optional.of(EmailType.TASK_FINISHED_SCHEDULED);
           case SERVICE:
-          case WORKER:
             return Optional.of(EmailType.TASK_FINISHED_LONG_RUNNING);
         }
       case TASK_KILLED:

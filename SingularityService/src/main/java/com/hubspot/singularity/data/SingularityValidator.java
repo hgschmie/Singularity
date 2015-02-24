@@ -70,7 +70,6 @@ public class SingularityValidator {
   private void checkForIllegalChanges(SingularityRequest request, SingularityRequest existingRequest) {
     checkBadRequest(request.getRequestType() == existingRequest.getRequestType(), String.format("Request can not change requestType from %s to %s", existingRequest.getRequestType(), request.getRequestType()));
     checkBadRequest(request.isScheduled() == existingRequest.isScheduled(), "Request can not change whether it is a scheduled request");
-    checkBadRequest(request.isDaemon() == existingRequest.isDaemon(), "Request can not change whether it is a daemon");
   }
 
   private void checkForIllegalResources(SingularityRequest request, SingularityDeploy deploy) {
