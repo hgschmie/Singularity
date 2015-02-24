@@ -157,11 +157,14 @@ class SingularitySlaveAndRackManager extends SingularitySchedulerParticipant {
     final String rackId = getRackId(offer);
     final String slaveId = offer.getSlaveId().getValue();
 
-    if (stateCache.getSlave(slaveId).get().getCurrentState().getState().isDecommissioning()) {
+    Optional<SingularitySlave> slave = stateCache.getSlave(slaveId);
+    Optional<SingularityRack> rack = stateCache.getRack(rackId);
+
+    if (slave.isPresent() && slave.get().getCurrentState().getState().isDecommissioning()) {
       return SlaveMatchState.SLAVE_DECOMMISSIONING;
     }
 
-    if (stateCache.getRack(rackId).get().getCurrentState().getState().isDecommissioning()) {
+    if (rack.isPresent() && rack.get().getCurrentState().getState().isDecommissioning()) {
       return SlaveMatchState.RACK_DECOMMISSIONING;
     }
 
