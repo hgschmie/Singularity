@@ -1,3 +1,0 @@
-source 'https://supermarket.getchef.com'
-
-cookbook 'singularity', path: '../cookbook'
